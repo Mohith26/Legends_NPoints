@@ -1,0 +1,80 @@
+export interface Keyword {
+  word: string;
+  weight: number;
+}
+
+export interface TopicSummary {
+  id: number;
+  rank: number;
+  gpt_label: string | null;
+  gpt_summary: string | null;
+  post_count: number;
+  avg_upvotes: number;
+  keywords: Keyword[];
+}
+
+export interface TopicListResponse {
+  topics: TopicSummary[];
+  pipeline_run_id: number | null;
+  run_completed_at: string | null;
+}
+
+export interface RepresentativeDoc {
+  post_id: number;
+  excerpt: string;
+  upvotes: number;
+  subreddit: string;
+}
+
+export interface TopicDetail {
+  id: number;
+  rank: number;
+  gpt_label: string | null;
+  gpt_summary: string | null;
+  post_count: number;
+  avg_upvotes: number;
+  keywords: Keyword[];
+  representative_docs: RepresentativeDoc[];
+}
+
+export interface PostSummary {
+  id: number;
+  reddit_id: string;
+  subreddit: string;
+  title: string;
+  upvotes: number;
+  url: string | null;
+  author: string | null;
+  created_utc: string | null;
+  probability: number | null;
+}
+
+export interface PostListResponse {
+  posts: PostSummary[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface Stats {
+  total_posts: number;
+  total_subreddits: number;
+  subreddits: string[];
+  last_run_date: string | null;
+  last_run_status: string | null;
+  total_topics: number;
+}
+
+export interface MethodologyData {
+  pipeline_run_id: number;
+  completed_at: string | null;
+  methodology: {
+    ingestion?: Record<string, unknown>;
+    preprocessing?: Record<string, unknown>;
+    topic_modeling?: Record<string, unknown>;
+    summarization?: Record<string, unknown>;
+    total_pipeline_duration_seconds?: number;
+    pipeline_version?: string;
+    run_timestamp?: string;
+  };
+}

@@ -1,0 +1,16 @@
+apify-client>=1.6.0
+python-dotenv>=1.0.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+alembic>=1.12.0
+pandas>=2.1.0
+bertopic>=0.16.0
+sentence-transformers>=2.2.0
+umap-learn>=0.5.0
+hdbscan>=0.8.33
+openai>=1.12.0
+fastapi>=0.109.0
+uvicorn>=0.27.0
+requests>=2.31.0
+httpx>=0.26.0
+pytest>=7.4.0
