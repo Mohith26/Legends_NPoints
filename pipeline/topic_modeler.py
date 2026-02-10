@@ -38,12 +38,25 @@ def run_topic_modeling(
 
     logger.info(f"Running topic modeling on {len(documents)} documents...")
 
+    # Auto-adjust parameters for small datasets
+    min_cluster_size = config.MIN_CLUSTER_SIZE
+    min_samples = config.MIN_SAMPLES
+    n_neighbors = 15
+    if len(documents) < 300:
+        min_cluster_size = max(5, len(documents) // 20)
+        min_samples = max(2, min_cluster_size // 3)
+        n_neighbors = min(15, len(documents) // 10)
+        logger.info(
+            f"Small dataset: adjusted min_cluster_size={min_cluster_size}, "
+            f"min_samples={min_samples}, n_neighbors={n_neighbors}"
+        )
+
     # Embedding model
     embedding_model = SentenceTransformer(config.EMBEDDING_MODEL)
 
     # UMAP
     umap_model = UMAP(
-        n_neighbors=15,
+        n_neighbors=n_neighbors,
         n_components=5,
         min_dist=0.0,
         metric="cosine",
@@ -52,8 +65,8 @@ def run_topic_modeling(
 
     # HDBSCAN
     hdbscan_model = HDBSCAN(
-        min_cluster_size=config.MIN_CLUSTER_SIZE,
-        min_samples=config.MIN_SAMPLES,
+        min_cluster_size=min_cluster_size,
+        min_samples=min_samples,
         metric="euclidean",
         prediction_data=True,
     )
