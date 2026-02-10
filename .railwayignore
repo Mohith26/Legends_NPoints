@@ -1,5 +1,4 @@
 docker-compose.yml
-Dockerfile
 frontend/
 *.dump
 *.sql
