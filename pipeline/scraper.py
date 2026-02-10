@@ -40,17 +40,21 @@ def run_scraper(config: PipelineConfig) -> tuple[int, dict]:
                 sub_count = 0
                 sub_comments = 0
 
+                # maxItems counts posts+comments together, so multiply to account for comments
+                max_items = config.MAX_POSTS_PER_SUBREDDIT * 6  # ~5 comments per post + the post itself
                 actor_input = {
                     "startUrls": [
                         {"url": f"https://www.reddit.com/r/{subreddit}/top/?t={config.TIME_FILTER}"}
                     ],
-                    "maxItems": config.MAX_POSTS_PER_SUBREDDIT,
+                    "maxItems": max_items,
+                    "maxPostCount": config.MAX_POSTS_PER_SUBREDDIT,
                     "maxComments": 5,
-                    "sort": config.SORT_BY,
+                    "sort": "top",
+                    "time": config.TIME_FILTER,
                 }
 
                 if config.has_brightdata:
-                    actor_input["proxyConfiguration"] = {
+                    actor_input["proxy"] = {
                         "useApifyProxy": False,
                         "proxyUrls": [config.brightdata_proxy_url],
                     }
@@ -59,13 +63,24 @@ def run_scraper(config: PipelineConfig) -> tuple[int, dict]:
                 run = client.actor(config.APIFY_ACTOR).call(run_input=actor_input)
                 dataset_items = client.dataset(run["defaultDatasetId"]).list_items().items
 
+                # Separate posts and comments (regular actor mixes them)
+                posts = [i for i in dataset_items if i.get("dataType") == "post" or "title" in i]
+                comments_by_post: dict[str, list[str]] = {}
                 for item in dataset_items:
-                    reddit_id = item.get("id", "")
+                    if item.get("dataType") == "comment" and item.get("postId"):
+                        post_id_key = item["postId"]
+                        comments_by_post.setdefault(post_id_key, [])
+                        if item.get("body"):
+                            comments_by_post[post_id_key].append(item["body"])
+
+                for item in posts:
+                    reddit_id = item.get("parsedId") or item.get("id", "")
                     if not reddit_id:
                         continue
 
-                    comments = item.get("comments", [])[:5]
-                    comment_texts = [c.get("body", "") for c in comments if c.get("body")]
+                    # Get comments for this post
+                    full_id = item.get("id", "")
+                    comment_texts = comments_by_post.get(full_id, [])[:5]
                     sub_comments += len(comment_texts)
 
                     created_utc = item.get("createdAt")
@@ -78,13 +93,13 @@ def run_scraper(config: PipelineConfig) -> tuple[int, dict]:
 
                     post_data = {
                         "reddit_id": reddit_id,
-                        "subreddit": subreddit,
+                        "subreddit": item.get("parsedCommunityName") or subreddit,
                         "title": item.get("title", ""),
-                        "body": item.get("body", "") or item.get("selftext", ""),
+                        "body": item.get("body", ""),
                         "top_comments": comment_texts,
-                        "upvotes": item.get("upVotes", 0) or item.get("score", 0),
+                        "upvotes": item.get("upVotes", 0),
                         "url": item.get("url", ""),
-                        "author": item.get("author", ""),
+                        "author": item.get("username", ""),
                         "created_utc": created_utc,
                     }
 

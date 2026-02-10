@@ -10,7 +10,7 @@ load_dotenv()
 class PipelineConfig:
     # Apify
     APIFY_API_TOKEN: str = os.getenv("APIFY_API_TOKEN", "")
-    APIFY_ACTOR: str = "trudax/reddit-scraper-lite"
+    APIFY_ACTOR: str = "trudax/reddit-scraper"
 
     # BrightData proxy (optional fallback)
     BRIGHTDATA_PROXY_HOST: str = os.getenv("BRIGHTDATA_PROXY_HOST", "")
@@ -34,10 +34,15 @@ class PipelineConfig:
         "NewParents",
         "Preschoolers",
         "ScienceBasedParenting",
+        "sleeptrain",
+        "breastfeeding",
+        "SAHP",
+        "workingmoms",
+        "raisingkids",
     ])
 
     # Scraping
-    MAX_POSTS_PER_SUBREDDIT: int = 200
+    MAX_POSTS_PER_SUBREDDIT: int = 750
     TIME_FILTER: str = "year"
     SORT_BY: str = "top"
 
