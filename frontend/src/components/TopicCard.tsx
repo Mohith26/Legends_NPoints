@@ -24,6 +24,12 @@ function TopicCard({ topic }: TopicCardProps) {
         {topic.gpt_summary || "No summary available."}
       </p>
 
+      {topic.pain_points && topic.pain_points.length > 0 && (
+        <p className="text-xs italic text-amber-700 bg-amber-50 px-3 py-2 rounded mb-3 line-clamp-2">
+          &ldquo;{topic.pain_points[0]}&rdquo;
+        </p>
+      )}
+
       <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
         <span>{topic.post_count} posts</span>
         <span>{topic.avg_upvotes.toFixed(0)} avg upvotes</span>

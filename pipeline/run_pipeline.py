@@ -5,6 +5,7 @@ Usage:
     python -m pipeline.run_pipeline --skip-scrape      # Reuse existing data
     python -m pipeline.run_pipeline --skip-summarize   # Skip GPT labels
     python -m pipeline.run_pipeline --direct-scrape    # Use BrightData direct instead of Apify
+    python -m pipeline.run_pipeline --build-legends    # Build Legends analysis lens
 """
 import argparse
 import logging
@@ -22,7 +23,7 @@ from pipeline.db import (
 )
 from pipeline.preprocessor import load_and_preprocess
 from pipeline.scraper import run_scraper, scrape_direct
-from pipeline.summarizer import summarize_all_topics
+from pipeline.summarizer import summarize_all_topics, summarize_all_topics_build_legends
 from pipeline.topic_modeler import extract_topic_data, run_topic_modeling
 
 logging.basicConfig(
@@ -37,6 +38,7 @@ def main():
     parser.add_argument("--skip-scrape", action="store_true", help="Skip scraping, use existing data")
     parser.add_argument("--skip-summarize", action="store_true", help="Skip GPT summarization")
     parser.add_argument("--direct-scrape", action="store_true", help="Use BrightData direct scraping")
+    parser.add_argument("--build-legends", action="store_true", help="Build Legends analysis lens (filter + targeted summarization)")
     args = parser.parse_args()
 
     config = PipelineConfig()
@@ -51,10 +53,11 @@ def main():
         "skip_scrape": args.skip_scrape,
         "skip_summarize": args.skip_summarize,
         "direct_scrape": args.direct_scrape,
+        "build_legends_mode": args.build_legends,
         "subreddits": list(config.TARGET_SUBREDDITS),
         "max_posts_per_subreddit": config.MAX_POSTS_PER_SUBREDDIT,
     })
-    logger.info(f"Pipeline run #{run.id} started")
+    logger.info(f"Pipeline run #{run.id} started (build_legends={args.build_legends})")
 
     try:
         # Step 1: Scrape
@@ -72,7 +75,8 @@ def main():
 
         # Step 2: Preprocess
         logger.info("=== STEP 2: Preprocessing ===")
-        df, preprocess_metrics = load_and_preprocess(session)
+        filter_mode = "build_legends" if args.build_legends else None
+        df, preprocess_metrics = load_and_preprocess(session, filter_mode=filter_mode)
         methodology["preprocessing"] = preprocess_metrics
 
         if len(df) < 50:
@@ -80,16 +84,21 @@ def main():
 
         # Step 3: Topic modeling
         logger.info("=== STEP 3: Topic Modeling ===")
-        topic_model, results_df, model_metrics = run_topic_modeling(df, config)
+        mode = "build_legends" if args.build_legends else "default"
+        topic_model, results_df, model_metrics = run_topic_modeling(df, config, mode=mode)
         methodology["topic_modeling"] = model_metrics
 
         # Extract topic data
-        topics_data = extract_topic_data(topic_model, results_df, config.NUM_TOPICS)
+        num_topics = config.BL_NUM_TOPICS if args.build_legends else config.NUM_TOPICS
+        topics_data = extract_topic_data(topic_model, results_df, num_topics)
 
         # Step 4: Summarize
         if not args.skip_summarize:
             logger.info("=== STEP 4: GPT Summarization ===")
-            topics_data, summarize_metrics = summarize_all_topics(topics_data, config)
+            if args.build_legends:
+                topics_data, summarize_metrics = summarize_all_topics_build_legends(topics_data, config)
+            else:
+                topics_data, summarize_metrics = summarize_all_topics(topics_data, config)
             methodology["summarization"] = summarize_metrics
         else:
             logger.info("=== STEP 4: Summarization SKIPPED ===")
@@ -112,6 +121,10 @@ def main():
                 "post_count": topic_data["post_count"],
                 "avg_upvotes": topic_data["avg_upvotes"],
                 "representative_docs": topic_data["representative_docs"],
+                "personas": topic_data.get("personas"),
+                "failed_solutions": topic_data.get("failed_solutions"),
+                "pain_points": topic_data.get("pain_points"),
+                "build_legends_angle": topic_data.get("build_legends_angle"),
             })
 
             # Map posts to topics

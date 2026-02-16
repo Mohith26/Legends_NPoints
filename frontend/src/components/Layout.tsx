@@ -15,7 +15,7 @@ function Layout({ children }: LayoutProps) {
                 Legends NPoints
               </h1>
               <span className="text-sm text-gray-500 hidden sm:inline">
-                What Parents Care About
+                Build Legends Customer Research
               </span>
             </Link>
             <nav className="flex gap-4">

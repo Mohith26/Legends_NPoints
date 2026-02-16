@@ -8,6 +8,17 @@ class KeywordSchema(BaseModel):
     weight: float
 
 
+class PersonaSchema(BaseModel):
+    type: str
+    child_age_range: str
+    key_struggle: str
+
+
+class FailedSolutionSchema(BaseModel):
+    solution: str
+    why_failed: str
+
+
 class TopicSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,6 +29,8 @@ class TopicSummary(BaseModel):
     post_count: int
     avg_upvotes: float
     keywords: list[KeywordSchema]
+    pain_points: list[str] | None = None
+    build_legends_angle: str | None = None
 
 
 class TopicListResponse(BaseModel):
@@ -44,6 +57,10 @@ class TopicDetailResponse(BaseModel):
     avg_upvotes: float
     keywords: list[KeywordSchema]
     representative_docs: list[RepresentativeDoc]
+    personas: list[PersonaSchema] | None = None
+    failed_solutions: list[FailedSolutionSchema] | None = None
+    pain_points: list[str] | None = None
+    build_legends_angle: str | None = None
 
 
 class PostSummary(BaseModel):

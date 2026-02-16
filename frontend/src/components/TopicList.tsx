@@ -45,15 +45,18 @@ function TopicList() {
       {stats && (
         <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-lg text-gray-700">
-            Analyzed{" "}
+            Filtered{" "}
             <span className="font-bold text-gray-900">
               {stats.total_posts.toLocaleString()}
             </span>{" "}
-            threads across{" "}
+            parenting threads for emotional & behavioral challenges across{" "}
             <span className="font-bold text-gray-900">
               {stats.total_subreddits}
             </span>{" "}
             subreddits
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            Lens: Meltdowns, anxiety, confidence, perfectionism, ADHD, behavioral issues
           </p>
           {data?.run_completed_at && (
             <p className="text-sm text-gray-500 mt-1">
@@ -65,7 +68,7 @@ function TopicList() {
       )}
 
       <h2 className="text-xl font-bold text-gray-900 mb-6">
-        Top {topics.length} Things Parents Care About
+        Top {topics.length} Pain Points for Build Legends
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">

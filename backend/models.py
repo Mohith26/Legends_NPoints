@@ -63,6 +63,10 @@ class Topic(Base):
     post_count = Column(Integer, default=0)
     avg_upvotes = Column(Float, default=0.0)
     representative_docs = Column(JSON, nullable=True)
+    personas = Column(JSON, nullable=True)
+    failed_solutions = Column(JSON, nullable=True)
+    pain_points = Column(JSON, nullable=True)
+    build_legends_angle = Column(Text, nullable=True)
 
     pipeline_run = relationship("PipelineRun", back_populates="topics")
     post_topics = relationship("PostTopic", back_populates="topic")

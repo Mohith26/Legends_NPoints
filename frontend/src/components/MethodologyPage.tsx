@@ -171,6 +171,23 @@ function MethodologyPage() {
           </MetricCard>
         )}
 
+        {/* Build Legends Filter */}
+        {(() => {
+          const blFilter = preprocessing?.build_legends_filter as Record<string, unknown> | undefined;
+          if (!blFilter) return null;
+          const catCounts = (blFilter.keyword_category_counts as Record<string, number>) || {};
+          return (
+            <MetricCard title="Build Legends Filter">
+              <MetricRow label="Documents before filter" value={blFilter.total_before_filtering as number} />
+              <MetricRow label="Documents after filter" value={blFilter.total_after_filtering as number} />
+              <MetricRow label="Filter pass rate" value={`${blFilter.filter_pass_rate}%`} />
+              {Object.entries(catCounts).map(([cat, count]) => (
+                <MetricRow key={cat} label={`Matched: ${cat}`} value={count} />
+              ))}
+            </MetricCard>
+          );
+        })()}
+
         {/* Analysis */}
         {topicModeling && !topicModeling.skipped && (
           <MetricCard title="Topic Modeling">

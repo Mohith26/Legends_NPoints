@@ -1,0 +1,445 @@
+{
+  "version": "v1 - Original N Points (Parent Discussion Topics)",
+  "saved_date": "2026-02-15",
+  "pipeline_run": {
+    "id": 2,
+    "status": "completed",
+    "started_at": "2026-02-10T10:31:14.750677+00:00",
+    "completed_at": "2026-02-10T10:32:59.994487+00:00",
+    "config": {
+      "target": "analysis-only",
+      "skip_scraping": true
+    },
+    "methodology": {
+      "preprocessing": {
+        "total_documents_before_cleaning": 6353,
+        "documents_removed_too_short": 34,
+        "documents_removed_duplicates": 15,
+        "total_documents_after_cleaning": 6304,
+        "total_words_processed": 2285080,
+        "avg_words_per_document": 362,
+        "min_words_in_document": 10,
+        "max_words_in_document": 4448,
+        "preprocessing_duration_seconds": 0.9
+      },
+      "topic_modeling": {
+        "embedding_model": "all-MiniLM-L6-v2",
+        "embedding_dimensions": 384,
+        "umap_params": {
+          "n_neighbors": 15,
+          "n_components": 5,
+          "min_dist": 0.0,
+          "metric": "cosine"
+        },
+        "hdbscan_params": {
+          "min_cluster_size": 15,
+          "min_samples": 5
+        },
+        "initial_clusters_found": 19,
+        "final_topics_after_merge": 19,
+        "outlier_count": 2287,
+        "outlier_percentage": 36.3,
+        "modeling_duration_seconds": 58.4
+      },
+      "summarization": {
+        "llm_model": "gpt-4o-mini",
+        "total_api_calls": 19,
+        "total_input_tokens": 9588,
+        "total_output_tokens": 1706,
+        "estimated_cost_usd": 0.0025,
+        "failed_summarizations": 0,
+        "summarization_duration_seconds": 45.6
+      },
+      "total_pipeline_duration_seconds": 105.3
+    }
+  },
+  "total_posts_analyzed": 6304,
+  "total_topics": 19,
+  "subreddits": [
+    "Parenting", "Mommit", "daddit", "beyondthebump", "toddlers",
+    "NewParents", "Preschoolers", "ScienceBasedParenting", "sleeptrain",
+    "breastfeeding", "SAHP", "workingmoms", "raisingkids"
+  ],
+  "topics": [
+    {
+      "id": 1,
+      "rank": 1,
+      "label": "Sleep Challenges and Concerns",
+      "summary": "Parents are actively discussing the difficulties surrounding their children's sleep patterns, including issues with nighttime awakenings, naps, and overall sleep quality. This topic resonates deeply as sleep deprivation can significantly impact both children's health and parents' well-being, leading to a shared sense of frustration and the search for effective solutions.",
+      "post_count": 1762,
+      "avg_upvotes": 499.6,
+      "keywords": [
+        {"word": "sleep", "weight": 0.035},
+        {"word": "night", "weight": 0.0224},
+        {"word": "nap", "weight": 0.0127},
+        {"word": "wake", "weight": 0.0124},
+        {"word": "naps", "weight": 0.0122},
+        {"word": "asleep", "weight": 0.0121},
+        {"word": "day", "weight": 0.0115},
+        {"word": "hours", "weight": 0.011},
+        {"word": "did", "weight": 0.0108},
+        {"word": "bed", "weight": 0.0108}
+      ]
+    },
+    {
+      "id": 2,
+      "rank": 2,
+      "label": "Balancing Work and Home Life",
+      "summary": "Parents are grappling with the challenges of managing work responsibilities alongside home life, particularly in the context of parenting. Discussions often revolve around the stress of returning to work after maternity leave, the misconceptions about stay-at-home parenting, and the struggle to maintain household duties while juggling a job. This topic matters as many parents seek validation and support in their efforts to find a balance that works for their families.",
+      "post_count": 352,
+      "avg_upvotes": 385,
+      "keywords": [
+        {"word": "work", "weight": 0.0306},
+        {"word": "job", "weight": 0.022},
+        {"word": "home", "weight": 0.02},
+        {"word": "working", "weight": 0.0154},
+        {"word": "day", "weight": 0.0144},
+        {"word": "house", "weight": 0.0139},
+        {"word": "ve", "weight": 0.0133},
+        {"word": "leave", "weight": 0.0132},
+        {"word": "need", "weight": 0.0115},
+        {"word": "week", "weight": 0.0101}
+      ]
+    },
+    {
+      "id": 3,
+      "rank": 3,
+      "label": "Creative Celebrations and Gifts",
+      "summary": "Parents are sharing their innovative ideas for celebrating special occasions like birthdays and holidays, focusing on personalized gifts and memorable experiences. Discussions often revolve around DIY projects, such as homemade furniture or unique party themes, highlighting the desire to create meaningful moments for their children while also navigating the challenges of gift-giving in a practical way. This topic resonates with parents who want to balance creativity and practicality in their celebrations, ensuring their children feel special without falling into the trap of consumerism.",
+      "post_count": 310,
+      "avg_upvotes": 533.2,
+      "keywords": [
+        {"word": "school", "weight": 0.0277},
+        {"word": "play", "weight": 0.0192},
+        {"word": "birthday", "weight": 0.0154},
+        {"word": "christmas", "weight": 0.0141},
+        {"word": "day", "weight": 0.0132},
+        {"word": "party", "weight": 0.0122},
+        {"word": "friends", "weight": 0.0118},
+        {"word": "make", "weight": 0.0109},
+        {"word": "home", "weight": 0.0106},
+        {"word": "gifts", "weight": 0.0103}
+      ]
+    },
+    {
+      "id": 4,
+      "rank": 4,
+      "label": "Breastfeeding Challenges and Support",
+      "summary": "Parents are sharing their struggles with breastfeeding, including issues like painful latching, concerns about milk supply, and the emotional toll of feeling inadequate. Many are seeking advice on how to overcome these challenges, emphasizing the importance of support from lactation consultants and the acceptance of formula feeding when necessary. This topic resonates deeply as parents navigate the complexities of infant feeding while balancing societal pressures and personal expectations.",
+      "post_count": 252,
+      "avg_upvotes": 350.4,
+      "keywords": [
+        {"word": "breastfeeding", "weight": 0.05},
+        {"word": "milk", "weight": 0.0299},
+        {"word": "formula", "weight": 0.0241},
+        {"word": "pump", "weight": 0.0218},
+        {"word": "feeding", "weight": 0.0208},
+        {"word": "supply", "weight": 0.0199},
+        {"word": "nursing", "weight": 0.0197},
+        {"word": "pumping", "weight": 0.0188},
+        {"word": "weight", "weight": 0.0183},
+        {"word": "breastfeed", "weight": 0.0162}
+      ]
+    },
+    {
+      "id": 5,
+      "rank": 5,
+      "label": "Screen Time Management",
+      "summary": "Parents are increasingly concerned about the impact of screen time on their children's development and behavior. Discussions revolve around balancing entertainment from screens, like TV and YouTube, with traditional activities such as reading, as many parents grapple with guilt over their children's screen habits. This topic matters because parents seek to understand the implications of screen exposure and find effective strategies to foster healthier media consumption for their kids.",
+      "post_count": 244,
+      "avg_upvotes": 544.2,
+      "keywords": [
+        {"word": "screen", "weight": 0.0334},
+        {"word": "tv", "weight": 0.0319},
+        {"word": "books", "weight": 0.0252},
+        {"word": "read", "weight": 0.0247},
+        {"word": "reading", "weight": 0.0243},
+        {"word": "watch", "weight": 0.0205},
+        {"word": "phone", "weight": 0.0183},
+        {"word": "youtube", "weight": 0.0173},
+        {"word": "book", "weight": 0.0138},
+        {"word": "watching", "weight": 0.0131}
+      ]
+    },
+    {
+      "id": 6,
+      "rank": 6,
+      "label": "Vaccination and Daycare Illnesses",
+      "summary": "Parents are actively discussing the importance of vaccinations for their children, particularly in light of rising concerns about vaccine hesitancy and its impact on community health. Additionally, many are sharing experiences related to frequent illnesses in toddlers attending daycare, often referred to as the 'daycare plague,' as they navigate the challenges of building their children's immune systems. This topic matters to parents as they seek to protect their children and understand the implications of both vaccination and exposure to common illnesses in group settings.",
+      "post_count": 217,
+      "avg_upvotes": 500.9,
+      "keywords": [
+        {"word": "sick", "weight": 0.0298},
+        {"word": "vaccine", "weight": 0.0293},
+        {"word": "vaccines", "weight": 0.0203},
+        {"word": "covid", "weight": 0.0157},
+        {"word": "research", "weight": 0.0129},
+        {"word": "daycare", "weight": 0.0121},
+        {"word": "vaccinated", "weight": 0.0117},
+        {"word": "flu", "weight": 0.0113},
+        {"word": "fever", "weight": 0.0112},
+        {"word": "measles", "weight": 0.0109}
+      ]
+    },
+    {
+      "id": 7,
+      "rank": 7,
+      "label": "Potty Training Experiences",
+      "summary": "Parents are sharing their diverse experiences and challenges related to potty training their children. Discussions often revolve around the varying timelines for success, strategies used, and humorous anecdotes that highlight the unpredictability of the process. This topic matters to parents as they seek support, tips, and reassurance during a significant developmental milestone for their kids.",
+      "post_count": 215,
+      "avg_upvotes": 618,
+      "keywords": [
+        {"word": "potty", "weight": 0.0377},
+        {"word": "clothes", "weight": 0.0262},
+        {"word": "poop", "weight": 0.0247},
+        {"word": "diaper", "weight": 0.0239},
+        {"word": "diapers", "weight": 0.0185},
+        {"word": "toilet", "weight": 0.0174},
+        {"word": "pants", "weight": 0.0159},
+        {"word": "bathroom", "weight": 0.0149},
+        {"word": "wear", "weight": 0.0142},
+        {"word": "potty trained", "weight": 0.0128}
+      ]
+    },
+    {
+      "id": 8,
+      "rank": 8,
+      "label": "Toddler Language and Humor",
+      "summary": "Parents are sharing adorable and humorous anecdotes about their toddlers' unique interpretations of language and everyday situations. These stories not only highlight the charming ways children express themselves but also serve as a reminder of the joy and challenges of parenting during the early years. This topic resonates with parents as they navigate the complexities of communication and cherish the fleeting moments of childhood innocence.",
+      "post_count": 210,
+      "avg_upvotes": 837.2,
+      "keywords": [
+        {"word": "little", "weight": 0.0201},
+        {"word": "lol", "weight": 0.0188},
+        {"word": "toddler", "weight": 0.0178},
+        {"word": "love", "weight": 0.0153},
+        {"word": "say", "weight": 0.0143},
+        {"word": "nursing", "weight": 0.0141},
+        {"word": "look", "weight": 0.0138},
+        {"word": "boob", "weight": 0.0134},
+        {"word": "mama", "weight": 0.0134},
+        {"word": "cute", "weight": 0.0131}
+      ]
+    },
+    {
+      "id": 9,
+      "rank": 9,
+      "label": "Picky Eating and Meal Prep",
+      "summary": "Parents are grappling with the challenges of picky eaters and the need for nutritious meal options for their toddlers. Discussions often revolve around strategies for introducing variety into limited diets, meal prepping for busy schedules, and seeking advice on managing mealtime stress. This topic is crucial as parents strive to ensure their children receive balanced nutrition while navigating their unique eating habits.",
+      "post_count": 178,
+      "avg_upvotes": 563.6,
+      "keywords": [
+        {"word": "food", "weight": 0.0527},
+        {"word": "eat", "weight": 0.0391},
+        {"word": "eating", "weight": 0.0238},
+        {"word": "dinner", "weight": 0.0233},
+        {"word": "foods", "weight": 0.0214},
+        {"word": "meal", "weight": 0.0196},
+        {"word": "cheese", "weight": 0.0178},
+        {"word": "meals", "weight": 0.0155},
+        {"word": "eats", "weight": 0.012},
+        {"word": "make", "weight": 0.0118}
+      ]
+    },
+    {
+      "id": 10,
+      "rank": 10,
+      "label": "Father's Day Expectations",
+      "summary": "Parents are navigating the complexities of celebrating Father's Day, often reflecting on the perceived effort put into Mother's Day. Discussions reveal tensions in relationships, with many fathers feeling underappreciated or misunderstood in their roles. This topic highlights the emotional stakes involved in family celebrations and the importance of mutual recognition and support in parenting dynamics.",
+      "post_count": 64,
+      "avg_upvotes": 595.4,
+      "keywords": [
+        {"word": "day", "weight": 0.0403},
+        {"word": "gift", "weight": 0.0235},
+        {"word": "men", "weight": 0.0206},
+        {"word": "women", "weight": 0.0157},
+        {"word": "family", "weight": 0.0153},
+        {"word": "didn", "weight": 0.0151},
+        {"word": "great", "weight": 0.0143},
+        {"word": "did", "weight": 0.0139},
+        {"word": "birthday", "weight": 0.0137},
+        {"word": "work", "weight": 0.0132}
+      ]
+    },
+    {
+      "id": 11,
+      "rank": 11,
+      "label": "Health Concerns and Autism Links",
+      "summary": "Parents are increasingly worried about potential health risks associated with common medications and environmental factors, particularly in relation to autism spectrum disorders. Discussions revolve around recent studies linking Tylenol use during pregnancy to autism, as well as concerns about lead exposure in children. These topics matter deeply to parents as they navigate the complexities of ensuring their children's health and well-being in an uncertain world.",
+      "post_count": 44,
+      "avg_upvotes": 356.9,
+      "keywords": [
+        {"word": "lead", "weight": 0.0311},
+        {"word": "autism", "weight": 0.0262},
+        {"word": "smell", "weight": 0.0244},
+        {"word": "research", "weight": 0.0221},
+        {"word": "studies", "weight": 0.0217},
+        {"word": "levels", "weight": 0.021},
+        {"word": "article", "weight": 0.0187},
+        {"word": "link", "weight": 0.0174},
+        {"word": "perfume", "weight": 0.0165},
+        {"word": "evidence", "weight": 0.0158}
+      ]
+    },
+    {
+      "id": 12,
+      "rank": 12,
+      "label": "School Safety and Immigration Concerns",
+      "summary": "Parents are increasingly worried about the impact of immigration enforcement on their children's education and safety. Discussions revolve around how ICE activities are affecting school environments, leading to canceled classes and restricted outdoor activities for young children. This topic resonates deeply as parents seek to protect their kids from fear and uncertainty in a politically charged climate.",
+      "post_count": 35,
+      "avg_upvotes": 1310.4,
+      "keywords": [
+        {"word": "ice", "weight": 0.0426},
+        {"word": "school", "weight": 0.0367},
+        {"word": "country", "weight": 0.0255},
+        {"word": "people", "weight": 0.0224},
+        {"word": "canada", "weight": 0.0218},
+        {"word": "news", "weight": 0.0211},
+        {"word": "fear", "weight": 0.0198},
+        {"word": "terrified", "weight": 0.0167},
+        {"word": "american", "weight": 0.0159},
+        {"word": "trump", "weight": 0.0156}
+      ]
+    },
+    {
+      "id": 13,
+      "rank": 13,
+      "label": "Pets and Parenting Challenges",
+      "summary": "Parents are grappling with the complexities of integrating pets into family life, especially when it comes to safety and emotional well-being. Discussions range from the challenges of managing pet behavior around young children to the regrets some parents feel about their pets after having kids. This topic is significant as it highlights the balancing act parents must perform between nurturing their children and caring for their animals.",
+      "post_count": 23,
+      "avg_upvotes": 655.7,
+      "keywords": [
+        {"word": "dog", "weight": 0.1492},
+        {"word": "dogs", "weight": 0.0638},
+        {"word": "pet", "weight": 0.0279},
+        {"word": "cats", "weight": 0.0263},
+        {"word": "house", "weight": 0.023},
+        {"word": "cat", "weight": 0.0226},
+        {"word": "pets", "weight": 0.0221},
+        {"word": "people", "weight": 0.0221},
+        {"word": "puppy", "weight": 0.0219},
+        {"word": "animals", "weight": 0.021}
+      ]
+    },
+    {
+      "id": 14,
+      "rank": 14,
+      "label": "Literacy and Child Development",
+      "summary": "Parents are discussing the critical role of reading in fostering childhood happiness and development. They share resources, seek advice on children's literature, and express concerns about behavioral issues in early education settings. This topic matters as parents strive to nurture a love of reading while managing the challenges of their children's social interactions.",
+      "post_count": 23,
+      "avg_upvotes": 2.4,
+      "keywords": [
+        {"word": "thumbnail default", "weight": 0.7023},
+        {"word": "thumbnail", "weight": 0.6736},
+        {"word": "default", "weight": 0.6195},
+        {"word": "love", "weight": 0.0563},
+        {"word": "bomb threat", "weight": 0.0443},
+        {"word": "silver bullet", "weight": 0.0443},
+        {"word": "released new", "weight": 0.0443},
+        {"word": "suing", "weight": 0.0443},
+        {"word": "principal outside", "weight": 0.0443},
+        {"word": "themed books", "weight": 0.0443}
+      ]
+    },
+    {
+      "id": 15,
+      "rank": 15,
+      "label": "Car Seat Safety Challenges",
+      "summary": "Parents are grappling with the challenges of getting their toddlers to comply with car seat safety regulations, often leading to emotional battles during car rides. Discussions highlight the importance of safety while also addressing the need for strategies to ease the struggles, such as allowing children to have some control or using distractions. This topic matters to parents as it underscores the critical balance between ensuring their child's safety and managing their emotional responses during these necessary routines.",
+      "post_count": 23,
+      "avg_upvotes": 768.8,
+      "keywords": [
+        {"word": "seat", "weight": 0.145},
+        {"word": "car", "weight": 0.1408},
+        {"word": "car seat", "weight": 0.1127},
+        {"word": "facing", "weight": 0.0515},
+        {"word": "rear", "weight": 0.0503},
+        {"word": "cart", "weight": 0.0378},
+        {"word": "safety", "weight": 0.0362},
+        {"word": "injuries", "weight": 0.0281},
+        {"word": "seats", "weight": 0.0268},
+        {"word": "lap", "weight": 0.0244}
+      ]
+    },
+    {
+      "id": 16,
+      "rank": 16,
+      "label": "Creative Parenting Moments",
+      "summary": "Parents are sharing and celebrating the unique and joyful moments in their children's lives, from quirky art projects to holiday card updates. This topic highlights the importance of creativity and positivity in parenting, as families find joy in the little things and connect over shared experiences. The discussions reflect a desire for community and support in navigating the ups and downs of raising kids.",
+      "post_count": 19,
+      "avg_upvotes": 373.6,
+      "keywords": [
+        {"word": "raisingkids", "weight": 0.0998},
+        {"word": "goats", "weight": 0.0877},
+        {"word": "goat", "weight": 0.0755},
+        {"word": "good times", "weight": 0.0742},
+        {"word": "good", "weight": 0.064},
+        {"word": "tuesday", "weight": 0.0603},
+        {"word": "normally", "weight": 0.0529},
+        {"word": "positive", "weight": 0.0508},
+        {"word": "spam", "weight": 0.043},
+        {"word": "recently good", "weight": 0.0398}
+      ]
+    },
+    {
+      "id": 17,
+      "rank": 17,
+      "label": "Daycare Affordability Concerns",
+      "summary": "Parents are increasingly alarmed by the skyrocketing costs of daycare, often exceeding their mortgage payments. Discussions revolve around the financial strain this places on families, with many contemplating whether one parent should stay home to save money. The recent introduction of free childcare in New Mexico has sparked hope and debate about potential solutions to this pressing issue across the country.",
+      "post_count": 16,
+      "avg_upvotes": 1131.7,
+      "keywords": [
+        {"word": "daycare", "weight": 0.0878},
+        {"word": "cost", "weight": 0.0532},
+        {"word": "paying", "weight": 0.045},
+        {"word": "taxes", "weight": 0.042},
+        {"word": "afford", "weight": 0.0419},
+        {"word": "home", "weight": 0.0412},
+        {"word": "mexico", "weight": 0.0394},
+        {"word": "daycare costs", "weight": 0.0391},
+        {"word": "tax", "weight": 0.0369},
+        {"word": "costs", "weight": 0.0363}
+      ]
+    },
+    {
+      "id": 18,
+      "rank": 18,
+      "label": "Childfree Perspectives on Parenting",
+      "summary": "This topic explores the interactions and tensions between parents and the childfree community on platforms like Reddit. Parents are discussing their experiences of navigating a world that often seems to favor childfree lifestyles, while also seeking support for the unique challenges of raising children. The conversations highlight the complexities of parenting in a society where views on children and family structures can vary widely, making it a significant concern for many parents.",
+      "post_count": 15,
+      "avg_upvotes": 614.5,
+      "keywords": [
+        {"word": "group", "weight": 0.0717},
+        {"word": "groups", "weight": 0.0648},
+        {"word": "childfree", "weight": 0.0526},
+        {"word": "sub", "weight": 0.0483},
+        {"word": "people", "weight": 0.0399},
+        {"word": "reddit", "weight": 0.0381},
+        {"word": "local", "weight": 0.0364},
+        {"word": "fb", "weight": 0.0338},
+        {"word": "ve", "weight": 0.0329},
+        {"word": "autistic", "weight": 0.0302}
+      ]
+    },
+    {
+      "id": 19,
+      "rank": 19,
+      "label": "Workplace Pumping Challenges",
+      "summary": "Parents, particularly breastfeeding mothers, are discussing the difficulties they face when pumping at work, including inadequate facilities and unsupportive coworkers. These conversations highlight the emotional and logistical struggles of balancing work responsibilities with breastfeeding needs, emphasizing the importance of supportive workplace policies for new parents.",
+      "post_count": 15,
+      "avg_upvotes": 358.8,
+      "keywords": [
+        {"word": "pump", "weight": 0.1016},
+        {"word": "room", "weight": 0.082},
+        {"word": "pumping", "weight": 0.0729},
+        {"word": "door", "weight": 0.0385},
+        {"word": "lactation", "weight": 0.0362},
+        {"word": "use", "weight": 0.0341},
+        {"word": "use room", "weight": 0.034},
+        {"word": "lactation room", "weight": 0.0312},
+        {"word": "hr", "weight": 0.031},
+        {"word": "manager", "weight": 0.0298}
+      ]
+    }
+  ]
+}

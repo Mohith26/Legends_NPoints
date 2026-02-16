@@ -28,20 +28,42 @@ DOMAIN_STOP_WORDS = [
     "feel", "feeling", "felt", "don", "doesn",
 ]
 
+# Words to keep (remove from stop list) in Build Legends mode
+# because they carry emotional signal
+BUILD_LEGENDS_KEEP_WORDS = ["feel", "feeling", "felt"]
+
+# Extra stop words for Build Legends mode
+# (generic reddit/parenting terms that dilute the emotional signal)
+BUILD_LEGENDS_EXTRA_STOP_WORDS = [
+    "reddit", "post", "edit", "update",
+    "anyone", "advice", "help", "please",
+    "normal", "experience", "experiences",
+    "subreddit", "thread", "comment",
+]
+
 
 def run_topic_modeling(
-    df: pd.DataFrame, config: PipelineConfig
+    df: pd.DataFrame, config: PipelineConfig, mode: str = "default"
 ) -> tuple[BERTopic, pd.DataFrame, dict]:
     """Run BERTopic on preprocessed documents. Returns (model, results_df, metrics)."""
     start_time = time.time()
     documents = df["document"].tolist()
 
-    logger.info(f"Running topic modeling on {len(documents)} documents...")
+    logger.info(f"Running topic modeling on {len(documents)} documents (mode={mode})...")
+
+    # Select parameters based on mode
+    if mode == "build_legends":
+        min_cluster_size = config.BL_MIN_CLUSTER_SIZE
+        min_samples = config.BL_MIN_SAMPLES
+        num_topics = config.BL_NUM_TOPICS
+    else:
+        min_cluster_size = config.MIN_CLUSTER_SIZE
+        min_samples = config.MIN_SAMPLES
+        num_topics = config.NUM_TOPICS
+
+    n_neighbors = 15
 
     # Auto-adjust parameters for small datasets
-    min_cluster_size = config.MIN_CLUSTER_SIZE
-    min_samples = config.MIN_SAMPLES
-    n_neighbors = 15
     if len(documents) < 300:
         min_cluster_size = max(5, len(documents) // 20)
         min_samples = max(2, min_cluster_size // 3)
@@ -75,6 +97,10 @@ def run_topic_modeling(
     from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
     all_stop_words = list(ENGLISH_STOP_WORDS) + DOMAIN_STOP_WORDS
 
+    if mode == "build_legends":
+        all_stop_words = [w for w in all_stop_words if w not in BUILD_LEGENDS_KEEP_WORDS]
+        all_stop_words.extend(BUILD_LEGENDS_EXTRA_STOP_WORDS)
+
     vectorizer = CountVectorizer(
         ngram_range=(1, 2),
         min_df=2,
@@ -87,7 +113,7 @@ def run_topic_modeling(
         umap_model=umap_model,
         hdbscan_model=hdbscan_model,
         vectorizer_model=vectorizer,
-        nr_topics=config.NUM_TOPICS,
+        nr_topics=num_topics,
         top_n_words=10,
         verbose=True,
     )
@@ -107,15 +133,16 @@ def run_topic_modeling(
     metrics = {
         "embedding_model": config.EMBEDDING_MODEL,
         "embedding_dimensions": 384,
+        "mode": mode,
         "umap_params": {
-            "n_neighbors": 15,
+            "n_neighbors": n_neighbors,
             "n_components": 5,
             "min_dist": 0.0,
             "metric": "cosine",
         },
         "hdbscan_params": {
-            "min_cluster_size": config.MIN_CLUSTER_SIZE,
-            "min_samples": config.MIN_SAMPLES,
+            "min_cluster_size": min_cluster_size,
+            "min_samples": min_samples,
         },
         "initial_clusters_found": initial_clusters,
         "final_topics_after_merge": len([t for t in unique_topics if t != -1]),

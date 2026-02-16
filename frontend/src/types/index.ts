@@ -3,6 +3,17 @@ export interface Keyword {
   weight: number;
 }
 
+export interface Persona {
+  type: string;
+  child_age_range: string;
+  key_struggle: string;
+}
+
+export interface FailedSolution {
+  solution: string;
+  why_failed: string;
+}
+
 export interface TopicSummary {
   id: number;
   rank: number;
@@ -11,6 +22,8 @@ export interface TopicSummary {
   post_count: number;
   avg_upvotes: number;
   keywords: Keyword[];
+  pain_points: string[] | null;
+  build_legends_angle: string | null;
 }
 
 export interface TopicListResponse {
@@ -35,6 +48,10 @@ export interface TopicDetail {
   avg_upvotes: number;
   keywords: Keyword[];
   representative_docs: RepresentativeDoc[];
+  personas: Persona[] | null;
+  failed_solutions: FailedSolution[] | null;
+  pain_points: string[] | null;
+  build_legends_angle: string | null;
 }
 
 export interface PostSummary {

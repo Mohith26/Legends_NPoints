@@ -72,6 +72,76 @@ function TopicDetail() {
         </div>
       </div>
 
+      {topic.build_legends_angle && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold text-emerald-900 mb-2">
+            Build Legends Opportunity
+          </h3>
+          <p className="text-emerald-800">{topic.build_legends_angle}</p>
+        </div>
+      )}
+
+      {topic.personas && topic.personas.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Parent Personas
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {topic.personas.map((persona, idx) => (
+              <div key={idx} className="bg-blue-50 rounded-lg p-4">
+                <p className="font-medium text-blue-900 text-sm">
+                  {persona.type}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Child age: {persona.child_age_range}
+                </p>
+                <p className="text-sm text-blue-800 mt-2">
+                  {persona.key_struggle}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {topic.pain_points && topic.pain_points.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            What Parents Are Saying
+          </h3>
+          <div className="space-y-3">
+            {topic.pain_points.map((point, idx) => (
+              <div key={idx} className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                  {idx + 1}
+                </span>
+                <p className="text-sm text-gray-700 italic">&ldquo;{point}&rdquo;</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {topic.failed_solutions && topic.failed_solutions.length > 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            What They Tried (That Didn&apos;t Work)
+          </h3>
+          <div className="space-y-3">
+            {topic.failed_solutions.map((fs, idx) => (
+              <div key={idx} className="border-l-4 border-red-300 pl-4">
+                <p className="text-sm font-medium text-gray-900">
+                  {fs.solution}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {fs.why_failed}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {topic.representative_docs.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">

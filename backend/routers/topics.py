@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import PipelineRun, PostTopic, RawPost, Topic
 from backend.schemas import (
+    FailedSolutionSchema,
     KeywordSchema,
+    PersonaSchema,
     PostListResponse,
     PostSummary,
     RepresentativeDoc,
@@ -51,6 +53,8 @@ def get_topics(db: Session = Depends(get_db)):
             post_count=t.post_count,
             avg_upvotes=t.avg_upvotes,
             keywords=keywords,
+            pain_points=t.pain_points,
+            build_legends_angle=t.build_legends_angle,
         ))
 
     return TopicListResponse(
@@ -80,6 +84,10 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
         avg_upvotes=topic.avg_upvotes,
         keywords=keywords,
         representative_docs=rep_docs,
+        personas=[PersonaSchema(**p) for p in (topic.personas or [])],
+        failed_solutions=[FailedSolutionSchema(**f) for f in (topic.failed_solutions or [])],
+        pain_points=topic.pain_points,
+        build_legends_angle=topic.build_legends_angle,
     )
 
 
