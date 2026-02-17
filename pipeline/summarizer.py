@@ -17,30 +17,50 @@ Respond with a JSON object containing:
 
 Be specific and insightful. Focus on the parenting concern, not generic descriptions."""
 
-BUILD_LEGENDS_SYSTEM_PROMPT = """You are a customer research analyst for Build Legends, a 5-minute daily confidence training app for elementary-aged kids (ages 5-14). You are analyzing Reddit parenting communities to extract deep customer insights.
+BUILD_LEGENDS_SYSTEM_PROMPT = """You are a customer research analyst for Build Legends, a 5-minute daily confidence training app for kids ages 5-14. You are analyzing Reddit posts to extract insights specifically about children's MENTAL HEALTH challenges.
 
-Given a topic cluster with keywords and representative posts, extract structured insights that will inform marketing, positioning, and product development.
+SCOPE — you ONLY care about these themes:
+- Anxiety (social anxiety, separation anxiety, school refusal, test anxiety, generalized worry)
+- Confidence & self-esteem (self-doubt, insecurity, fear of judgment)
+- Perfectionism (fear of failure, won't try new things, meltdowns over mistakes)
+- Emotional regulation (meltdowns, outbursts, rage, big emotions, inability to cope)
+- ADHD & neurodivergent challenges (focus, impulsivity, executive function, sensory overload)
+- Behavioral issues (defiance, aggression, oppositional behavior)
+- Social skills (making friends, bullying, peer rejection, social isolation)
+- Depression & mood (sadness, withdrawal, loss of interest)
+- Resilience & grit (giving up easily, low frustration tolerance, fixed mindset)
 
-Respond with a JSON object containing:
+INCLUDE topics about: emotional outbursts/tantrums/meltdowns at ANY age (including toddlers), confidence issues in ANY context (sports, school, social), social dynamics/friendships/peer issues, school-related anxiety or refusal, performance anxiety, parenting approaches to emotional/behavioral challenges, discipline tied to emotional outcomes, neurodivergent challenges.
 
-1. "label": A 3-6 word title for this pain point cluster (e.g., "Daily Homework Meltdowns", "Gifted Kid Perfectionism Spiral")
+Be INCLUSIVE — if a cluster touches mental health themes even partially, treat it as ON-TOPIC and extract the mental health angle.
 
-2. "summary": A 2-3 sentence description of the core problem these parents face. Write from the parent's perspective. Be specific and visceral, not clinical.
+OUT OF SCOPE — ONLY reject clusters that are PURELY about: sleep training, picky eating, potty training, breastfeeding, physical illness, vaccines, pet safety, birthday parties, pregnancy, custody logistics, screen time limits with NO emotional component, fashion/clothing, religion.
 
-3. "personas": An array of 2-4 parent personas found in this cluster. Each persona is an object with:
-   - "type": A specific descriptor (e.g., "Overwhelmed mom of anxious 7yo perfectionist", "Dad of ADHD 10yo who refuses homework")
-   - "child_age_range": Estimated age range of the child (e.g., "6-8", "9-12")
-   - "key_struggle": One sentence capturing their daily reality
+Given a topic cluster with keywords and representative posts, extract structured insights.
 
-4. "failed_solutions": An array of 3-5 things these parents have tried that didn't fully work. Each is an object with:
-   - "solution": What they tried (e.g., "Talk therapy", "Positive affirmations", "Reward charts")
-   - "why_failed": Why it didn't work or fell short (e.g., "Child won't open up to therapist", "Feels hollow and child sees through it")
+If the cluster has ZERO connection to any of the 9 mental health themes above, respond with:
+{"off_topic": true, "label": "<brief description>", "reason": "<why it's off-topic>"}
 
-5. "pain_points": An array of 3-5 specific, vivid pain points expressed by parents. Each is a string written as a parent would say it (e.g., "Every homework session ends in tears and screaming", "My kid won't try anything new because she's terrified of failing")
+Otherwise, respond with a JSON object:
 
-6. "build_legends_angle": A 1-2 sentence insight on how Build Legends (daily 5-min confidence training) could specifically address this cluster's needs.
+1. "label": A 3-6 word title for this mental health pain point (e.g., "Gifted Kid Perfectionism Spiral", "ADHD Homework Meltdown Cycle", "Social Anxiety School Refusal")
 
-Be specific and grounded in the actual post content. Avoid generic advice. Extract the real language parents use."""
+2. "summary": 2-3 sentences describing the core emotional/behavioral problem. Write from the parent's perspective. Be specific and visceral, not clinical.
+
+3. "personas": Array of 2-4 parent personas. Each object has:
+   - "type": Specific descriptor (e.g., "Mom of anxious 8yo who refuses school")
+   - "child_age_range": e.g., "6-8", "9-12"
+   - "key_struggle": One sentence capturing their daily emotional reality
+
+4. "failed_solutions": Array of 3-5 things parents tried that didn't work. Each object has:
+   - "solution": What they tried (e.g., "Weekly talk therapy", "Reward charts", "Positive affirmations")
+   - "why_failed": Why it fell short (e.g., "Child clams up in sessions", "Feels hollow — child sees through it")
+
+5. "pain_points": Array of 3-5 vivid pain points in the parent's own words (e.g., "Every morning is a battle just to get her out the door", "He says 'I'm stupid' whenever he makes a mistake")
+
+6. "build_legends_angle": 2-3 sentences on how Build Legends specifically addresses this. Reference concrete product mechanics: daily 5-minute missions, confidence streaks, character growth system, parent dashboard insights. Explain why this works better than what they've tried.
+
+Be specific and grounded in the actual post content. Use the real language parents use. Do not fabricate quotes unsupported by the excerpts."""
 
 
 def summarize_topic(client: OpenAI, topic_data: dict, config: PipelineConfig) -> dict:
@@ -119,6 +139,25 @@ Representative Post Excerpts:
 
         result = json.loads(response.choices[0].message.content)
         usage = response.usage
+
+        # Off-topic detection
+        if result.get("off_topic"):
+            logger.info(
+                f"  Topic #{topic_data['rank']} flagged as off-topic: "
+                f"{result.get('reason', 'no reason')}"
+            )
+            return {
+                "label": result.get("label", ""),
+                "summary": "",
+                "personas": [],
+                "failed_solutions": [],
+                "pain_points": [],
+                "build_legends_angle": "",
+                "off_topic": True,
+                "off_topic_reason": result.get("reason", ""),
+                "input_tokens": usage.prompt_tokens if usage else 0,
+                "output_tokens": usage.completion_tokens if usage else 0,
+            }
 
         return {
             "label": result.get("label", ""),
@@ -202,6 +241,7 @@ def summarize_all_topics_build_legends(
     total_output_tokens = 0
     failed = 0
 
+    off_topic_count = 0
     for topic in topics_data:
         result = summarize_topic_build_legends(client, topic, config)
         topic["gpt_label"] = result["label"]
@@ -210,12 +250,24 @@ def summarize_all_topics_build_legends(
         topic["failed_solutions"] = result.get("failed_solutions", [])
         topic["pain_points"] = result.get("pain_points", [])
         topic["build_legends_angle"] = result.get("build_legends_angle", "")
+        topic["off_topic"] = result.get("off_topic", False)
         total_input_tokens += result.get("input_tokens", 0)
         total_output_tokens += result.get("output_tokens", 0)
         if "error" in result:
             failed += 1
+        if result.get("off_topic"):
+            off_topic_count += 1
 
         logger.info(f"  Topic #{topic['rank']}: {result['label']}")
+
+    # Remove off-topic clusters
+    before_filter = len(topics_data)
+    topics_data = [t for t in topics_data if not t.get("off_topic")]
+    if off_topic_count > 0:
+        logger.info(f"  Removed {off_topic_count} off-topic clusters ({before_filter} -> {len(topics_data)})")
+    # Re-rank after removing off-topic
+    for i, topic in enumerate(topics_data, 1):
+        topic["rank"] = i
 
     input_cost = total_input_tokens * 0.15 / 1_000_000
     output_cost = total_output_tokens * 0.6 / 1_000_000

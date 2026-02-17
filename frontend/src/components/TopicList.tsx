@@ -49,14 +49,14 @@ function TopicList() {
             <span className="font-bold text-gray-900">
               {stats.total_posts.toLocaleString()}
             </span>{" "}
-            parenting threads for emotional & behavioral challenges across{" "}
+            parenting threads for kids' mental health challenges across{" "}
             <span className="font-bold text-gray-900">
               {stats.total_subreddits}
             </span>{" "}
             subreddits
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            Lens: Meltdowns, anxiety, confidence, perfectionism, ADHD, behavioral issues
+            Focus: Anxiety, confidence, emotional regulation, perfectionism, ADHD, social skills
           </p>
           {data?.run_completed_at && (
             <p className="text-sm text-gray-500 mt-1">
@@ -68,7 +68,7 @@ function TopicList() {
       )}
 
       <h2 className="text-xl font-bold text-gray-900 mb-6">
-        Top {topics.length} Pain Points for Build Legends
+        Top {topics.length} Kids' Mental Health Pain Points
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">

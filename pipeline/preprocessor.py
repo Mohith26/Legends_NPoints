@@ -31,14 +31,16 @@ BUILD_LEGENDS_KEYWORDS = {
         "anxiety", "anxious", "worried", "worrying", "panic",
         "panic attack", "separation anxiety", "school anxiety",
         "social anxiety", "nervous", "fearful",
-        "scared", "phobia", "overthinking", "catastrophizing",
+        "phobia", "overthinking", "catastrophizing",
+        "school refusal", "test anxiety", "performance anxiety",
     ],
     "adhd_neuro": [
-        "adhd", "add", "attention deficit", "hyperactive", "impulsive",
+        "adhd", "attention deficit", "hyperactive", "impulsive",
         "impulsivity", "executive function", "focus issues",
-        "can't focus", "can't sit still", "fidget", "sensory",
+        "can't focus", "can't sit still", "fidget",
+        "sensory overload", "sensory meltdown", "sensory issues",
         "sensory processing", "neurodivergent", "neurodiverse",
-        "spectrum", "asd", "autism", "autistic", "gifted",
+        "asd", "autism", "autistic", "gifted",
         "twice exceptional", "2e",
     ],
     "behavioral": [
@@ -49,19 +51,73 @@ BUILD_LEGENDS_KEYWORDS = {
         "disrespectful", "back talk", "backtalk",
     ],
     "resilience": [
-        "resilience", "resilient", "coping", "cope",
-        "frustrated", "frustration", "easily frustrated",
-        "low frustration tolerance", "gives up", "quit",
-        "quitting", "perseverance", "grit", "growth mindset",
-        "fixed mindset",
+        "resilience", "resilient",
+        "easily frustrated", "low frustration tolerance",
+        "gives up", "quit", "quitting",
+        "perseverance", "grit", "growth mindset", "fixed mindset",
     ],
     "interventions": [
-        "therapy", "therapist", "counseling", "counselor",
-        "psychologist", "psychiatrist", "medication",
-        "occupational therapy", "behavioral therapy",
-        "cbt", "play therapy", "iep", "504 plan",
+        "child therapist", "child therapy", "play therapy",
+        "behavioral therapy", "talk therapy", "child psychologist",
+        "child psychiatrist", "counseling", "counselor",
+        "anxiety medication", "adhd medication", "ssri",
+        "stimulant medication", "cbt", "iep", "504 plan",
+    ],
+    "social_emotional": [
+        "social skills", "making friends", "no friends", "lonely",
+        "bullied", "bullying", "peer rejection", "left out",
+        "social isolation", "depression", "depressed",
+        "withdrawal", "withdrawn", "self harm", "suicidal",
     ],
 }
+
+# Exclusion patterns — posts matching these are rejected even if they
+# matched inclusion keywords. Catches physical health, infant care, and
+# non-mental-health parenting topics.
+BUILD_LEGENDS_EXCLUDE_PATTERNS = [
+    # Sleep / infant care
+    r"\bsleep\s*train", r"\bcrib\b", r"\bnap\s*schedule",
+    r"\bnight\s*wean", r"\bferber\b", r"\bcry\s*it\s*out\b",
+    r"\bswaddle\b", r"\bmelatonin\b", r"\bco.?sleep",
+    # Feeding / breastfeeding / food
+    r"\bbreastfeed", r"\bformula\s*feed", r"\blatching\b",
+    r"\bnursing\b", r"\bpicky\s*eat", r"\bsolids\b",
+    r"\bweaning\b", r"\bbottle\s*refus", r"\bpumping\b",
+    r"\bmilk\s*supply\b", r"\bpuree\b", r"\bhigh\s*chair\b",
+    # Potty / diapers
+    r"\bpotty\s*train", r"\bdiaper", r"\bbed\s*wett",
+    r"\btoilet\s*train", r"\bpull.?ups?\b",
+    # Physical health
+    r"\bvaccin", r"\bteething\b", r"\bearache\b",
+    r"\bear\s*infect", r"\bfever\b", r"\brash\b",
+    r"\beczema\b", r"\basthma\b", r"\bbroken\s*bone",
+    r"\bstrep\b", r"\bRSV\b", r"\bflu\b",
+    # Pets / safety
+    r"\bdog\s*bit", r"\bcat\s*scratch", r"\bpet\s*safe",
+    r"\bchild\s*proof", r"\bbaby\s*gate\b", r"\bcar\s*seat\b",
+    r"\bdog\b", r"\bcat\b", r"\bpet\b",
+    # Pregnancy / postpartum physical
+    r"\bpregnancy\b", r"\bpregnant\b", r"\bc-section\b",
+    r"\blabor\s*and\s*delivery\b", r"\bpostpartum\b",
+    r"\bnewborn\b", r"\binfant\b",
+    # Birthday / party / gifts / holidays
+    r"\bbirthday\s*party\b", r"\bgift\s*idea", r"\bparty\s*plan",
+    r"\bchristmas\b", r"\bgift\b", r"\bpresent\b",
+    r"\bhalloween\b", r"\bholiday\b",
+    # Custody / divorce logistics
+    r"\bcustody\b", r"\bdivorce\b", r"\bchild\s*support\b",
+    # Climate / politics / societal
+    r"\bclimate\b", r"\bglobal\s*warming\b", r"\belection\b",
+    r"\bgun\s*violence\b", r"\bschool\s*shoot",
+    # Screen time (unless emotional impact)
+    r"\bscreen\s*time\b", r"\bipad\b", r"\btablet\b",
+    r"\bvideo\s*game", r"\bfortnite\b", r"\broblox\b",
+    r"\byoutube\b", r"\btiktok\b",
+    # General noise topics
+    r"\bstroller\b", r"\bclothing\b", r"\boutfit\b",
+    r"\bgenital\b", r"\bcircumcis", r"\bchurch\b",
+    r"\breligion\b", r"\bbaptis",
+]
 
 
 def _build_keyword_pattern(keyword_groups: dict[str, list[str]]) -> re.Pattern:
@@ -79,11 +135,25 @@ _BL_PATTERN = _build_keyword_pattern(BUILD_LEGENDS_KEYWORDS)
 
 
 def filter_for_build_legends(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
-    """Filter documents to those relevant to Build Legends themes."""
+    """Filter documents to kids' mental health topics only.
+
+    Two-pass filter:
+    1. Include posts matching mental health keywords
+    2. Exclude posts matching physical/daily-life patterns
+    """
     before_count = len(df)
 
+    # Pass 1: Include posts matching mental health keywords
     mask = df["document"].str.contains(_BL_PATTERN, regex=True)
     filtered_df = df[mask].copy()
+    after_include = len(filtered_df)
+
+    # Pass 2: Exclude posts about non-mental-health topics
+    exclude_pattern = '|'.join(BUILD_LEGENDS_EXCLUDE_PATTERNS)
+    exclude_re = re.compile(exclude_pattern, re.IGNORECASE)
+    exclude_mask = filtered_df["document"].str.contains(exclude_re, regex=True)
+    filtered_df = filtered_df[~exclude_mask].copy()
+    after_exclude = len(filtered_df)
 
     # Track which keyword categories matched for each document
     _category_patterns = {}
@@ -96,9 +166,19 @@ def filter_for_build_legends(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 
     filtered_df["matched_categories"] = filtered_df["document"].apply(get_matched_categories)
 
+    # Pass 3: Require posts to match at least 2 different keyword categories.
+    # This ensures the post is genuinely about mental health rather than
+    # mentioning a single keyword in passing (e.g. "anxiety" about vaccines).
+    multi_cat_mask = filtered_df["matched_categories"].apply(lambda cats: len(cats) >= 2)
+    filtered_df = filtered_df[multi_cat_mask].copy()
+    after_multi = len(filtered_df)
+
     after_count = len(filtered_df)
     metrics = {
         "total_before_filtering": int(before_count),
+        "total_after_include": int(after_include),
+        "excluded_by_negative_filter": int(after_include - after_exclude),
+        "excluded_single_category": int(after_exclude - after_multi),
         "total_after_filtering": int(after_count),
         "filter_pass_rate": round(after_count / before_count * 100, 1) if before_count > 0 else 0,
         "keyword_category_counts": {

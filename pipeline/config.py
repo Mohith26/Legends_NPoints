@@ -53,8 +53,8 @@ class PipelineConfig:
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 
     # Build Legends mode overrides
-    BL_NUM_TOPICS: int = 12
-    BL_MIN_CLUSTER_SIZE: int = 10
+    BL_NUM_TOPICS: int = 25
+    BL_MIN_CLUSTER_SIZE: int = 8
     BL_MIN_SAMPLES: int = 3
 
     # Summarization
@@ -62,7 +62,7 @@ class PipelineConfig:
     GPT_TEMPERATURE: float = 0.3
 
     # Pipeline version
-    PIPELINE_VERSION: str = "2.0.0"
+    PIPELINE_VERSION: str = "3.0.0"
 
     @property
     def has_brightdata(self) -> bool:

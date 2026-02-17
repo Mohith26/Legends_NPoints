@@ -35,10 +35,25 @@ BUILD_LEGENDS_KEEP_WORDS = ["feel", "feeling", "felt"]
 # Extra stop words for Build Legends mode
 # (generic reddit/parenting terms that dilute the emotional signal)
 BUILD_LEGENDS_EXTRA_STOP_WORDS = [
+    # Reddit meta
     "reddit", "post", "edit", "update",
     "anyone", "advice", "help", "please",
     "normal", "experience", "experiences",
     "subreddit", "thread", "comment",
+    # Sleep / infant care (should not form topic centroids)
+    "sleep", "sleeping", "nap", "naps", "bedtime", "wake", "waking",
+    # Food / feeding
+    "eat", "eating", "food", "foods", "meal", "meals", "snack", "snacks",
+    "picky", "feeding", "bottle", "breastfeeding", "formula",
+    # Physical care
+    "potty", "diaper", "diapers", "toilet", "teeth", "teething", "bath",
+    # Physical health
+    "sick", "fever", "cold", "cough", "rash", "allergy", "allergies",
+    "vaccine", "vaccines", "vaccination", "pediatrician",
+    # Pregnancy / infant
+    "pregnant", "pregnancy", "newborn", "infant", "nursing", "pumping", "milk",
+    # General noise
+    "house", "room", "bed", "car", "daycare",
 ]
 
 

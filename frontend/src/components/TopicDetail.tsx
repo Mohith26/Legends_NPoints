@@ -75,7 +75,7 @@ function TopicDetail() {
       {topic.build_legends_angle && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6">
           <h3 className="text-lg font-semibold text-emerald-900 mb-2">
-            Build Legends Opportunity
+            How Build Legends Addresses This
           </h3>
           <p className="text-emerald-800">{topic.build_legends_angle}</p>
         </div>
