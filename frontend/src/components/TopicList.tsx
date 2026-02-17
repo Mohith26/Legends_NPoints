@@ -45,15 +45,27 @@ function TopicList() {
       {stats && (
         <div className="mb-8 bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-lg text-gray-700">
-            Filtered{" "}
+            Analyzed{" "}
             <span className="font-bold text-gray-900">
               {stats.total_posts.toLocaleString()}
             </span>{" "}
-            parenting threads for kids' mental health challenges across{" "}
+            threads across{" "}
             <span className="font-bold text-gray-900">
               {stats.total_subreddits}
             </span>{" "}
             subreddits
+            {stats.filtered_posts != null && (
+              <>
+                {" "}&rarr; filtered to{" "}
+                <span className="font-bold text-indigo-600">
+                  {stats.filtered_posts.toLocaleString()}
+                </span>{" "}
+                mental health threads
+                <span className="text-sm text-gray-500 ml-1">
+                  ({((stats.filtered_posts / stats.total_posts) * 100).toFixed(1)}%)
+                </span>
+              </>
+            )}
           </p>
           <p className="text-sm text-gray-500 mt-1">
             Focus: Anxiety, confidence, emotional regulation, perfectionism, ADHD, social skills

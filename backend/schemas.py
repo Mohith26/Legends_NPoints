@@ -91,6 +91,7 @@ class StatsResponse(BaseModel):
     last_run_date: datetime | None
     last_run_status: str | None
     total_topics: int
+    filtered_posts: int | None = None
 
 
 class HealthResponse(BaseModel):

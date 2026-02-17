@@ -139,8 +139,13 @@ def get_stats(db: Session = Depends(get_db)):
 
     run = _get_latest_run(db)
     total_topics = 0
+    filtered_posts = None
     if run:
         total_topics = db.query(func.count(Topic.id)).filter(Topic.pipeline_run_id == run.id).scalar() or 0
+        if run.methodology:
+            bl_filter = (run.methodology.get("preprocessing") or {}).get("build_legends_filter")
+            if bl_filter:
+                filtered_posts = bl_filter.get("total_after_filtering")
 
     return StatsResponse(
         total_posts=total_posts,
@@ -149,6 +154,7 @@ def get_stats(db: Session = Depends(get_db)):
         last_run_date=run.completed_at if run else None,
         last_run_status=run.status if run else None,
         total_topics=total_topics,
+        filtered_posts=filtered_posts,
     )
 
 

@@ -80,6 +80,7 @@ export interface Stats {
   last_run_date: string | null;
   last_run_status: string | null;
   total_topics: number;
+  filtered_posts: number | null;
 }
 
 export interface MethodologyData {
