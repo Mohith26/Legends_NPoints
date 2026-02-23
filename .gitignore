@@ -3,7 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.egg-info/
-dist/
+# Python dist (not frontend/dist)
+/dist/
 build/
 .eggs/
 *.egg
@@ -29,7 +30,6 @@ Thumbs.db
 # Node
 node_modules/
 frontend/node_modules/
-frontend/dist/
 
 # Database
 *.db

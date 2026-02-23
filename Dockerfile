@@ -6,6 +6,7 @@ COPY requirements-web.txt .
 RUN pip install --no-cache-dir -r requirements-web.txt
 
 COPY backend/ backend/
+COPY frontend/dist/ frontend/dist/
 COPY alembic/ alembic/
 COPY alembic.ini .
 
