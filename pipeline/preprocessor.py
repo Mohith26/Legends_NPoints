@@ -15,11 +15,16 @@ BUILD_LEGENDS_KEYWORDS = {
         "meltdown", "meltdowns", "tantrum", "tantrums", "outburst", "outbursts",
         "emotional regulation", "dysregulation", "dysregulated", "big emotions",
         "emotional breakdown", "rage", "raging", "screaming fit",
+        "crying", "upset", "overwhelmed", "freaking out", "losing it", "inconsolable",
+        "angry", "anger", "frustrated", "frustration", "screaming", "yelling",
+        "emotional", "emotions", "struggling", "behavior", "struggling", "behavior",
     ],
     "confidence": [
         "confidence", "self-esteem", "self esteem", "self-worth", "self worth",
         "insecure", "insecurity", "self-doubt", "self doubt",
         "low confidence", "no confidence",
+        "shy", "shyness", "timid", "afraid to speak up", "won't participate",
+        "people pleaser", "approval seeking",
     ],
     "perfectionism": [
         "perfectionist", "perfectionism", "afraid to fail", "fear of failure",
@@ -28,11 +33,15 @@ BUILD_LEGENDS_KEYWORDS = {
         "can't handle losing", "won't try new things",
     ],
     "anxiety": [
-        "anxiety", "anxious", "worried", "worrying", "panic",
+        "anxiety", "anxious", "worried", "worrying", "worry", "worries", "panic",
+        "scared", "afraid", "fear", "fears",
         "panic attack", "separation anxiety", "school anxiety",
         "social anxiety", "nervous", "fearful",
         "phobia", "overthinking", "catastrophizing",
         "school refusal", "test anxiety", "performance anxiety",
+        "stressed", "nightmares", "night terrors",
+        "afraid of the dark", "clingy", "clinginess",
+        "stomach aches", "tummy aches",
     ],
     "adhd_neuro": [
         "adhd", "attention deficit", "hyperactive", "impulsive",
@@ -49,25 +58,41 @@ BUILD_LEGENDS_KEYWORDS = {
         "aggressive", "aggression", "hitting", "biting",
         "lashing out", "destructive", "disobedient", "won't listen",
         "disrespectful", "back talk", "backtalk",
+        "discipline", "power struggle", "strong-willed", "stubborn",
     ],
     "resilience": [
         "resilience", "resilient",
         "easily frustrated", "low frustration tolerance",
         "gives up", "quit", "quitting",
         "perseverance", "grit", "growth mindset", "fixed mindset",
+        "unmotivated", "won't do homework", "refuses homework",
+        "hates school", "no effort",
     ],
     "interventions": [
-        "child therapist", "child therapy", "play therapy",
+        "therapy", "therapist", "child therapist", "child therapy", "play therapy",
         "behavioral therapy", "talk therapy", "child psychologist",
         "child psychiatrist", "counseling", "counselor",
         "anxiety medication", "adhd medication", "ssri",
         "stimulant medication", "cbt", "iep", "504 plan",
     ],
     "social_emotional": [
-        "social skills", "making friends", "no friends", "lonely",
+        "social skills", "making friends", "no friends", "lonely", "loneliness",
         "bullied", "bullying", "peer rejection", "left out",
         "social isolation", "depression", "depressed",
         "withdrawal", "withdrawn", "self harm", "suicidal",
+    ],
+    "parenting_approaches": [
+        "gentle parenting", "positive discipline", "coping strategies",
+        "coping skills", "emotional coaching", "emotion coaching",
+        "conscious parenting", "how to help my child",
+        "authoritative parenting", "parenting style",
+    ],
+    "school_social": [
+        "school struggle", "struggling in school", "hates school",
+        "school problems", "teacher says", "called by school",
+        "peer pressure", "fitting in", "doesn't fit in",
+        "excluded", "picked on", "teased", "made fun of",
+        "embarrassed", "humiliated",
     ],
 }
 
@@ -95,28 +120,21 @@ BUILD_LEGENDS_EXCLUDE_PATTERNS = [
     # Pets / safety
     r"\bdog\s*bit", r"\bcat\s*scratch", r"\bpet\s*safe",
     r"\bchild\s*proof", r"\bbaby\s*gate\b", r"\bcar\s*seat\b",
-    r"\bdog\b", r"\bcat\b", r"\bpet\b",
     # Pregnancy / postpartum physical
     r"\bpregnancy\b", r"\bpregnant\b", r"\bc-section\b",
     r"\blabor\s*and\s*delivery\b", r"\bpostpartum\b",
     r"\bnewborn\b", r"\binfant\b",
     # Birthday / party / gifts / holidays
     r"\bbirthday\s*party\b", r"\bgift\s*idea", r"\bparty\s*plan",
-    r"\bchristmas\b", r"\bgift\b", r"\bpresent\b",
-    r"\bhalloween\b", r"\bholiday\b",
-    # Custody / divorce logistics
-    r"\bcustody\b", r"\bdivorce\b", r"\bchild\s*support\b",
-    # Climate / politics / societal
-    r"\bclimate\b", r"\bglobal\s*warming\b", r"\belection\b",
-    r"\bgun\s*violence\b", r"\bschool\s*shoot",
-    # Screen time (unless emotional impact)
+    r"\bchristmas\b", r"\bhalloween\b",
+    # Screen time
     r"\bscreen\s*time\b", r"\bipad\b", r"\btablet\b",
     r"\bvideo\s*game", r"\bfortnite\b", r"\broblox\b",
     r"\byoutube\b", r"\btiktok\b",
     # General noise topics
     r"\bstroller\b", r"\bclothing\b", r"\boutfit\b",
     r"\bgenital\b", r"\bcircumcis", r"\bchurch\b",
-    r"\breligion\b", r"\bbaptis",
+    r"\breligion\b",
 ]
 
 
@@ -166,11 +184,6 @@ def filter_for_build_legends(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 
     filtered_df["matched_categories"] = filtered_df["document"].apply(get_matched_categories)
 
-    # Pass 3: Require posts to match at least 2 different keyword categories.
-    # This ensures the post is genuinely about mental health rather than
-    # mentioning a single keyword in passing (e.g. "anxiety" about vaccines).
-    multi_cat_mask = filtered_df["matched_categories"].apply(lambda cats: len(cats) >= 2)
-    filtered_df = filtered_df[multi_cat_mask].copy()
     after_multi = len(filtered_df)
 
     after_count = len(filtered_df)

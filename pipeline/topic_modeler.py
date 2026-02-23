@@ -100,13 +100,18 @@ def run_topic_modeling(
         random_state=42,
     )
 
-    # HDBSCAN
-    hdbscan_model = HDBSCAN(
-        min_cluster_size=min_cluster_size,
-        min_samples=min_samples,
-        metric="euclidean",
-        prediction_data=True,
-    )
+    # Clustering model
+    if mode == "build_legends":
+        from sklearn.cluster import KMeans
+        cluster_model = KMeans(n_clusters=num_topics, random_state=42, n_init=10)
+        logger.info(f"Using KMeans with n_clusters={num_topics} (zero outliers)")
+    else:
+        cluster_model = HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            metric="euclidean",
+            prediction_data=True,
+        )
 
     # Vectorizer with domain stop words
     from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
@@ -126,9 +131,9 @@ def run_topic_modeling(
     topic_model = BERTopic(
         embedding_model=embedding_model,
         umap_model=umap_model,
-        hdbscan_model=hdbscan_model,
+        hdbscan_model=cluster_model,
         vectorizer_model=vectorizer,
-        nr_topics=num_topics,
+        nr_topics=None if mode == "build_legends" else num_topics,
         top_n_words=10,
         verbose=True,
     )

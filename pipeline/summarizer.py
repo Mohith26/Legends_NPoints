@@ -30,16 +30,9 @@ SCOPE — you ONLY care about these themes:
 - Depression & mood (sadness, withdrawal, loss of interest)
 - Resilience & grit (giving up easily, low frustration tolerance, fixed mindset)
 
-INCLUDE topics about: emotional outbursts/tantrums/meltdowns at ANY age (including toddlers), confidence issues in ANY context (sports, school, social), social dynamics/friendships/peer issues, school-related anxiety or refusal, performance anxiety, parenting approaches to emotional/behavioral challenges, discipline tied to emotional outcomes, neurodivergent challenges.
-
-Be INCLUSIVE — if a cluster touches mental health themes even partially, treat it as ON-TOPIC and extract the mental health angle.
-
-OUT OF SCOPE — ONLY reject clusters that are PURELY about: sleep training, picky eating, potty training, breastfeeding, physical illness, vaccines, pet safety, birthday parties, pregnancy, custody logistics, screen time limits with NO emotional component, fashion/clothing, religion.
+IMPORTANT: Every cluster has been pre-filtered to contain mental-health-relevant posts. DO NOT flag any cluster as off-topic. Instead, find the strongest mental health angle in every cluster and extract insights from that angle. Even if a cluster seems broad (e.g., "discipline challenges" or "parenting stress"), find and focus on how it connects to children's emotional wellbeing.
 
 Given a topic cluster with keywords and representative posts, extract structured insights.
-
-If the cluster has ZERO connection to any of the 9 mental health themes above, respond with:
-{"off_topic": true, "label": "<brief description>", "reason": "<why it's off-topic>"}
 
 Otherwise, respond with a JSON object:
 

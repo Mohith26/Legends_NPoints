@@ -53,9 +53,9 @@ class PipelineConfig:
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
 
     # Build Legends mode overrides
-    BL_NUM_TOPICS: int = 15
-    BL_MIN_CLUSTER_SIZE: int = 8
-    BL_MIN_SAMPLES: int = 3
+    BL_NUM_TOPICS: int = 10
+    BL_MIN_CLUSTER_SIZE: int = 5
+    BL_MIN_SAMPLES: int = 2
 
     # Summarization
     GPT_MODEL: str = "gpt-4o-mini"
