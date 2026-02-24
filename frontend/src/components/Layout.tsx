@@ -26,6 +26,12 @@ function Layout({ children }: LayoutProps) {
                 Dashboard
               </Link>
               <Link
+                to="/labels"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                Labels
+              </Link>
+              <Link
                 to="/methodology"
                 className="text-sm font-medium text-gray-600 hover:text-gray-900"
               >

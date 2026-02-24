@@ -83,6 +83,69 @@ export interface Stats {
   filtered_posts: number | null;
 }
 
+// ── Label Analysis Types ──────────────────────────────────────────────────
+
+export interface MarketingInsights {
+  ad_hooks: string[];
+  messaging_angles: string[];
+  target_audience_description: string;
+  emotional_triggers: string[];
+}
+
+export interface StorySummary {
+  id: number;
+  title: string;
+  summary: string | null;
+  post_count: number;
+  build_legends_angle: string | null;
+}
+
+export interface StoryDetail {
+  id: number;
+  title: string;
+  summary: string | null;
+  post_count: number;
+  pain_points: string[] | null;
+  failed_solutions: FailedSolution[] | null;
+  build_legends_angle: string | null;
+  representative_quotes: string[] | null;
+}
+
+export interface LabelSummary {
+  id: number;
+  name: string;
+  slug: string;
+  post_count: number;
+  discovery_method: string;
+  story_count: number;
+  stories: StorySummary[];
+}
+
+export interface LabelListResponse {
+  labels: LabelSummary[];
+  pipeline_run_id: number | null;
+  run_completed_at: string | null;
+}
+
+export interface LabelDetail {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  post_count: number;
+  discovery_method: string;
+  example_phrases: string[] | null;
+  marketing_insights: MarketingInsights | null;
+  stories: StoryDetail[];
+}
+
+export interface LabelStats {
+  total_labels: number;
+  total_stories: number;
+  total_labeled_posts: number;
+  top_labels: LabelSummary[];
+}
+
 export interface MethodologyData {
   pipeline_run_id: number;
   completed_at: string | null;

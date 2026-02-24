@@ -57,6 +57,11 @@ class PipelineConfig:
     BL_MIN_CLUSTER_SIZE: int = 5
     BL_MIN_SAMPLES: int = 2
 
+    # Labels Analysis
+    LABEL_MIN_POSTS: int = 20
+    LABEL_MAX_STORIES: int = 5
+    LABEL_GPT_DISCOVERY_SAMPLE: int = 200
+
     # Summarization
     GPT_MODEL: str = "gpt-4o-mini"
     GPT_TEMPERATURE: float = 0.3

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from backend.models import Base, PipelineRun, PostTopic, RawPost, Topic
+from backend.models import Base, LabelStory, ParentLabel, PipelineRun, PostLabel, PostTopic, RawPost, Topic
 
 
 def get_engine(database_url: str):
@@ -76,3 +76,22 @@ def store_post_topic(session: Session, post_topic_data: dict):
 
 def get_all_posts(session: Session) -> list[RawPost]:
     return session.query(RawPost).all()
+
+
+def store_label(session: Session, label_data: dict) -> ParentLabel:
+    label = ParentLabel(**label_data)
+    session.add(label)
+    session.flush()
+    return label
+
+
+def store_label_story(session: Session, story_data: dict) -> LabelStory:
+    story = LabelStory(**story_data)
+    session.add(story)
+    session.flush()
+    return story
+
+
+def store_post_label(session: Session, post_label_data: dict):
+    pl = PostLabel(**post_label_data)
+    session.add(pl)

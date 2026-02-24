@@ -96,3 +96,74 @@ class StatsResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+
+
+# ── Label Analysis Schemas ──────────────────────────────────────────────────
+
+class MarketingInsightsSchema(BaseModel):
+    ad_hooks: list[str] = []
+    messaging_angles: list[str] = []
+    target_audience_description: str = ""
+    emotional_triggers: list[str] = []
+
+
+class StorySummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    summary: str | None
+    post_count: int
+    build_legends_angle: str | None = None
+
+
+class StoryDetailResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    summary: str | None
+    post_count: int
+    pain_points: list[str] | None = None
+    failed_solutions: list[FailedSolutionSchema] | None = None
+    build_legends_angle: str | None = None
+    representative_quotes: list[str] | None = None
+
+
+class LabelSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    slug: str
+    post_count: int
+    discovery_method: str
+    story_count: int = 0
+    stories: list[StorySummary] = []
+
+
+class LabelListResponse(BaseModel):
+    labels: list[LabelSummary]
+    pipeline_run_id: int | None
+    run_completed_at: datetime | None
+
+
+class LabelDetailResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    slug: str
+    description: str | None
+    post_count: int
+    discovery_method: str
+    example_phrases: list[str] | None = None
+    marketing_insights: MarketingInsightsSchema | None = None
+    stories: list[StoryDetailResponse] = []
+
+
+class LabelStatsResponse(BaseModel):
+    total_labels: int
+    total_stories: int
+    total_labeled_posts: int
+    top_labels: list[LabelSummary] = []

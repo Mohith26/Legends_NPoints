@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.config import CORS_ORIGINS
-from backend.routers import health, topics
+from backend.routers import health, labels, topics
 
 app = FastAPI(
     title="Legends NPoints",
@@ -24,6 +24,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(topics.router)
+app.include_router(labels.router)
 
 # Serve React build in production
 frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"

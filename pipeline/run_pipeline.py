@@ -6,6 +6,7 @@ Usage:
     python -m pipeline.run_pipeline --skip-summarize   # Skip GPT labels
     python -m pipeline.run_pipeline --direct-scrape    # Use BrightData direct instead of Apify
     python -m pipeline.run_pipeline --build-legends    # Build Legends analysis lens
+    python -m pipeline.run_pipeline --skip-labels      # Skip label analysis step
 """
 import argparse
 import logging
@@ -39,6 +40,7 @@ def main():
     parser.add_argument("--skip-summarize", action="store_true", help="Skip GPT summarization")
     parser.add_argument("--direct-scrape", action="store_true", help="Use BrightData direct scraping")
     parser.add_argument("--build-legends", action="store_true", help="Build Legends analysis lens (filter + targeted summarization)")
+    parser.add_argument("--skip-labels", action="store_true", help="Skip label analysis step")
     args = parser.parse_args()
 
     config = PipelineConfig()
@@ -138,6 +140,16 @@ def main():
                 })
 
         session.commit()
+
+        # Step 6: Label Analysis (Build Legends only)
+        if args.build_legends and not args.skip_labels:
+            logger.info("=== STEP 6: Label Analysis ===")
+            from pipeline.label_analyzer import run_label_analysis
+            label_metrics = run_label_analysis(session, df, run.id, config)
+            methodology["label_analysis"] = label_metrics
+        elif args.build_legends:
+            logger.info("=== STEP 6: Label Analysis SKIPPED ===")
+            methodology["label_analysis"] = {"skipped": True}
 
         # Finalize
         total_elapsed = round(time.time() - pipeline_start, 1)
