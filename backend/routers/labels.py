@@ -143,6 +143,16 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
+    # Pre-fetch top posts for the label as fallback when stories lack source_post_ids
+    label_fallback_posts = (
+        db.query(RawPost)
+        .join(PostLabel, PostLabel.raw_post_id == RawPost.id)
+        .filter(PostLabel.label_id == label.id)
+        .order_by(RawPost.upvotes.desc())
+        .limit(5)
+        .all()
+    )
+
     story_details = []
     for s in stories:
         failed_solutions = None
@@ -165,6 +175,17 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                     upvotes=p.upvotes or 0,
                 )
                 for p in posts
+            ]
+        else:
+            source_posts = [
+                SourcePostSchema(
+                    id=p.id,
+                    title=p.title,
+                    url=p.url,
+                    subreddit=p.subreddit,
+                    upvotes=p.upvotes or 0,
+                )
+                for p in label_fallback_posts
             ]
 
         story_details.append(StoryDetailResponse(
