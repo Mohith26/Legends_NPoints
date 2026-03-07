@@ -106,6 +106,14 @@ export interface MicroPersona {
   specific_trigger: string;
 }
 
+export interface SourcePost {
+  id: number;
+  title: string;
+  url: string | null;
+  subreddit: string;
+  upvotes: number;
+}
+
 export interface StoryDetail {
   id: number;
   title: string;
@@ -116,6 +124,7 @@ export interface StoryDetail {
   build_legends_angle: string | null;
   representative_quotes: string[] | null;
   micro_personas: MicroPersona[] | null;
+  source_posts: SourcePost[];
 }
 
 export interface LabelSummary {

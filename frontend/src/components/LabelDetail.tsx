@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useLabel, useLabelPosts } from "../hooks/useLabels";
 import PostTable from "./PostTable";
-import type { StoryDetail } from "../types";
+import type { StoryDetail, SourcePost } from "../types";
 
 function StoryCard({ story }: { story: StoryDetail }) {
   return (
@@ -91,6 +91,36 @@ function StoryCard({ story }: { story: StoryDetail }) {
                     Trigger: {persona.specific_trigger}
                   </p>
                 )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {story.source_posts && story.source_posts.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+            Source Threads
+          </h4>
+          <div className="space-y-1.5">
+            {story.source_posts.map((post) => (
+              <div key={post.id} className="flex items-center gap-2 text-sm">
+                <span className="text-gray-400 flex-shrink-0">r/{post.subreddit}</span>
+                {post.url ? (
+                  <a
+                    href={post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-800 hover:underline truncate"
+                  >
+                    {post.title}
+                  </a>
+                ) : (
+                  <span className="text-gray-700 truncate">{post.title}</span>
+                )}
+                <span className="text-gray-400 flex-shrink-0 ml-auto">
+                  {post.upvotes.toLocaleString()} pts
+                </span>
               </div>
             ))}
           </div>

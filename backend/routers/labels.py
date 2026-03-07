@@ -14,6 +14,7 @@ from backend.schemas import (
     MicroPersonaSchema,
     PostListResponse,
     PostSummary,
+    SourcePostSchema,
     StoryDetailResponse,
     StorySummary,
 )
@@ -152,6 +153,20 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         if s.micro_personas:
             micro_personas = [MicroPersonaSchema(**mp) for mp in s.micro_personas]
 
+        source_posts = []
+        if s.source_post_ids:
+            posts = db.query(RawPost).filter(RawPost.id.in_(s.source_post_ids)).all()
+            source_posts = [
+                SourcePostSchema(
+                    id=p.id,
+                    title=p.title,
+                    url=p.url,
+                    subreddit=p.subreddit,
+                    upvotes=p.upvotes or 0,
+                )
+                for p in posts
+            ]
+
         story_details.append(StoryDetailResponse(
             id=s.id,
             title=s.title,
@@ -162,6 +177,7 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
             build_legends_angle=s.build_legends_angle,
             representative_quotes=s.representative_quotes,
             micro_personas=micro_personas,
+            source_posts=source_posts,
         ))
 
     marketing = None

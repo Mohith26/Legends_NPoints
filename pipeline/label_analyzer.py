@@ -682,7 +682,8 @@ def run_label_analysis(
         })
 
         # Store stories
-        for story in stories:
+        for story, sc in zip(stories, sub_clusters):
+            source_post_ids = [doc["post_id"] for doc in sc.get("representative_docs", [])]
             store_label_story(session, {
                 "label_id": label_record.id,
                 "title": story["title"],
@@ -693,6 +694,7 @@ def run_label_analysis(
                 "build_legends_angle": story.get("build_legends_angle", ""),
                 "representative_quotes": story.get("representative_quotes"),
                 "micro_personas": story.get("micro_personas"),
+                "source_post_ids": source_post_ids,
             })
             total_stories += 1
 

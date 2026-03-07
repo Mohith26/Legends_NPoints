@@ -123,6 +123,14 @@ class StorySummary(BaseModel):
     build_legends_angle: str | None = None
 
 
+class SourcePostSchema(BaseModel):
+    id: int
+    title: str
+    url: str | None
+    subreddit: str
+    upvotes: int
+
+
 class StoryDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -135,6 +143,7 @@ class StoryDetailResponse(BaseModel):
     build_legends_angle: str | None = None
     representative_quotes: list[str] | None = None
     micro_personas: list[MicroPersonaSchema] | None = None
+    source_posts: list[SourcePostSchema] = []
 
 
 class LabelSummary(BaseModel):
