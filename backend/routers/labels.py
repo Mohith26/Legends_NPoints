@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
-from backend.models import LabelStory, ParentLabel, PipelineRun, PostLabel
+from backend.models import LabelStory, ParentLabel, PipelineRun, PostLabel, RawPost
 from backend.schemas import (
     FailedSolutionSchema,
     LabelDetailResponse,
@@ -11,6 +11,9 @@ from backend.schemas import (
     LabelStatsResponse,
     LabelSummary,
     MarketingInsightsSchema,
+    MicroPersonaSchema,
+    PostListResponse,
+    PostSummary,
     StoryDetailResponse,
     StorySummary,
 )
@@ -145,6 +148,10 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         if s.failed_solutions:
             failed_solutions = [FailedSolutionSchema(**fs) for fs in s.failed_solutions]
 
+        micro_personas = None
+        if s.micro_personas:
+            micro_personas = [MicroPersonaSchema(**mp) for mp in s.micro_personas]
+
         story_details.append(StoryDetailResponse(
             id=s.id,
             title=s.title,
@@ -154,6 +161,7 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
             failed_solutions=failed_solutions,
             build_legends_angle=s.build_legends_angle,
             representative_quotes=s.representative_quotes,
+            micro_personas=micro_personas,
         ))
 
     marketing = None
@@ -171,3 +179,63 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         marketing_insights=marketing,
         stories=story_details,
     )
+
+
+_PAIN_KEYWORDS_SQL = [
+    "nothing works", "at my wits end", "desperate", "don't know what to do",
+    "struggling", "exhausted", "tried everything", "what am i doing wrong",
+    "breaking point", "can't handle", "out of control", "feel like a failure",
+    "breaks my heart", "kills me to see", "it's getting worse",
+]
+
+
+def _pain_sort_expr():
+    return sum(
+        case((RawPost.title.ilike(f"%{kw}%"), 1), else_=0)
+        + case((RawPost.body.ilike(f"%{kw}%"), 1), else_=0)
+        for kw in _PAIN_KEYWORDS_SQL
+    )
+
+
+@router.get("/api/labels/{label_id}/posts", response_model=PostListResponse)
+def get_label_posts(
+    label_id: int,
+    page: int = 1,
+    page_size: int = 20,
+    sort: str = Query("upvotes", regex="^(upvotes|pain)$"),
+    db: Session = Depends(get_db),
+):
+    label = db.query(ParentLabel).filter(ParentLabel.id == label_id).first()
+    if not label:
+        raise HTTPException(status_code=404, detail="Label not found")
+
+    query = (
+        db.query(RawPost, PostLabel.matched_phrase)
+        .join(PostLabel, PostLabel.raw_post_id == RawPost.id)
+        .filter(PostLabel.label_id == label_id)
+    )
+
+    if sort == "pain":
+        query = query.order_by(_pain_sort_expr().desc(), RawPost.upvotes.desc())
+    else:
+        query = query.order_by(RawPost.upvotes.desc())
+
+    total = query.count()
+    offset = (page - 1) * page_size
+    results = query.offset(offset).limit(page_size).all()
+
+    posts = []
+    for post, _matched_phrase in results:
+        posts.append(PostSummary(
+            id=post.id,
+            reddit_id=post.reddit_id,
+            subreddit=post.subreddit,
+            title=post.title,
+            upvotes=post.upvotes or 0,
+            url=post.url,
+            author=post.author,
+            created_utc=post.created_utc,
+            probability=None,
+        ))
+
+    return PostListResponse(posts=posts, total=total, page=page, page_size=page_size)

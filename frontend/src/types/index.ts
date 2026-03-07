@@ -100,6 +100,12 @@ export interface StorySummary {
   build_legends_angle: string | null;
 }
 
+export interface MicroPersona {
+  description: string;
+  child_age: string;
+  specific_trigger: string;
+}
+
 export interface StoryDetail {
   id: number;
   title: string;
@@ -109,6 +115,7 @@ export interface StoryDetail {
   failed_solutions: FailedSolution[] | null;
   build_legends_angle: string | null;
   representative_quotes: string[] | null;
+  micro_personas: MicroPersona[] | null;
 }
 
 export interface LabelSummary {

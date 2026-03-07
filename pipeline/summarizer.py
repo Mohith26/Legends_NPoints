@@ -32,24 +32,30 @@ SCOPE — you ONLY care about these themes:
 
 IMPORTANT: Every cluster has been pre-filtered to contain mental-health-relevant posts. DO NOT flag any cluster as off-topic. Instead, find the strongest mental health angle in every cluster and extract insights from that angle. Even if a cluster seems broad (e.g., "discipline challenges" or "parenting stress"), find and focus on how it connects to children's emotional wellbeing.
 
+IMPORTANT: Focus on NEGATIVE posts — parents expressing pain, frustration, desperation, and struggle. Ignore advice posts, success stories, or positive anecdotes. We want the raw pain that drives parents to seek help.
+
 Given a topic cluster with keywords and representative posts, extract structured insights.
 
-Otherwise, respond with a JSON object:
+Respond with a JSON object:
 
 1. "label": A 3-6 word title for this mental health pain point (e.g., "Gifted Kid Perfectionism Spiral", "ADHD Homework Meltdown Cycle", "Social Anxiety School Refusal")
 
-2. "summary": 2-3 sentences describing the core emotional/behavioral problem. Write from the parent's perspective. Be specific and visceral, not clinical.
+2. "summary": 2-3 sentences describing the core emotional/behavioral problem. Write from the parent's perspective. Be specific and visceral, not clinical. Use the desperate, raw language parents actually use in these posts.
 
-3. "personas": Array of 2-4 parent personas. Each object has:
-   - "type": Specific descriptor (e.g., "Mom of anxious 8yo who refuses school")
+3. "personas": Array of 3-4 MICRO-PERSONAS. These are NOT generic demographics — they are hyper-specific parent profiles that could be targeted in a Meta ad. Each object has:
+   - "type": A full micro-persona sentence with 3 layers of specificity: (1) the child's specific challenge/diagnosis, (2) the specific trigger or scenario, (3) the parent's specific life circumstance or sacrifice. Make this feel like a real, specific person.
+     - BAD: "Mom of anxious 8yo"
+     - GOOD: "Stay-at-home mom of a twice-exceptional 8yo who was just told by the school he needs to repeat 2nd grade — she's terrified he's losing confidence forever"
+     - GOOD: "Working single dad of a 10yo with ADHD who gets called by the school 3x a week because his son had another meltdown — he's running out of PTO"
+     - GOOD: "Former teacher turned homeschool mom of a gifted but emotionally dysregulated 9yo after public school kept calling her in weekly — she gave up her career to get this right"
    - "child_age_range": e.g., "6-8", "9-12"
-   - "key_struggle": One sentence capturing their daily emotional reality
+   - "key_struggle": The specific daily moment that breaks them — not a category, but a scene. e.g., "Every night at 6pm homework starts and within 10 minutes he's sobbing on the floor saying he's stupid while she stands there not knowing if holding him or pushing him will make it worse"
 
 4. "failed_solutions": Array of 3-5 things parents tried that didn't work. Each object has:
    - "solution": What they tried (e.g., "Weekly talk therapy", "Reward charts", "Positive affirmations")
    - "why_failed": Why it fell short (e.g., "Child clams up in sessions", "Feels hollow — child sees through it")
 
-5. "pain_points": Array of 3-5 vivid pain points in the parent's own words (e.g., "Every morning is a battle just to get her out the door", "He says 'I'm stupid' whenever he makes a mistake")
+5. "pain_points": Array of 3-5 vivid pain points using the actual desperate language from these posts. Pull near-direct quotes where possible. These should hit hard emotionally — the kind of raw confessions a parent would whisper at 2am. (e.g., "I watched my daughter rip up her drawing because one line was crooked and I realized she got this from me", "He told me he wishes he was never born and he's only 7")
 
 6. "build_legends_angle": 2-3 sentences on how Build Legends specifically addresses this. Reference concrete product mechanics: daily 5-minute missions, confidence streaks, character growth system, parent dashboard insights. Explain why this works better than what they've tried.
 

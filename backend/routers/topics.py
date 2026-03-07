@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -91,11 +91,30 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
     )
 
 
+# Subset of pain keywords for SQL-level filtering
+_PAIN_KEYWORDS_SQL = [
+    "nothing works", "at my wits end", "desperate", "don't know what to do",
+    "struggling", "exhausted", "tried everything", "what am i doing wrong",
+    "breaking point", "can't handle", "out of control", "feel like a failure",
+    "breaks my heart", "kills me to see", "it's getting worse",
+]
+
+
+def _pain_sort_expr():
+    """Build a SQL expression that counts pain keyword matches in title+body."""
+    return sum(
+        case((RawPost.title.ilike(f"%{kw}%"), 1), else_=0)
+        + case((RawPost.body.ilike(f"%{kw}%"), 1), else_=0)
+        for kw in _PAIN_KEYWORDS_SQL
+    )
+
+
 @router.get("/api/topics/{topic_id}/posts", response_model=PostListResponse)
 def get_topic_posts(
     topic_id: int,
     page: int = 1,
     page_size: int = 20,
+    sort: str = Query("upvotes", regex="^(upvotes|pain)$"),
     db: Session = Depends(get_db),
 ):
     topic = db.query(Topic).filter(Topic.id == topic_id).first()
@@ -106,8 +125,12 @@ def get_topic_posts(
         db.query(RawPost, PostTopic.probability)
         .join(PostTopic, PostTopic.raw_post_id == RawPost.id)
         .filter(PostTopic.topic_id == topic_id)
-        .order_by(RawPost.upvotes.desc())
     )
+
+    if sort == "pain":
+        query = query.order_by(_pain_sort_expr().desc(), RawPost.upvotes.desc())
+    else:
+        query = query.order_by(RawPost.upvotes.desc())
 
     total = query.count()
     offset = (page - 1) * page_size

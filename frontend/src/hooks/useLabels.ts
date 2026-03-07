@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLabel, getLabels, getLabelStats } from "../api/labels";
+import { getLabel, getLabels, getLabelPosts, getLabelStats } from "../api/labels";
 
 export function useLabels() {
   return useQuery({
@@ -13,6 +13,14 @@ export function useLabel(id: number) {
     queryKey: ["label", id],
     queryFn: () => getLabel(id),
     enabled: !!id,
+  });
+}
+
+export function useLabelPosts(labelId: number, page = 1, pageSize = 20) {
+  return useQuery({
+    queryKey: ["labelPosts", labelId, page, pageSize],
+    queryFn: () => getLabelPosts(labelId, page, pageSize),
+    enabled: !!labelId,
   });
 }
 

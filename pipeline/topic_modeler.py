@@ -200,8 +200,13 @@ def extract_topic_data(
         post_count = len(topic_posts)
         avg_upvotes = round(float(topic_posts["upvotes"].mean()), 1) if post_count > 0 else 0.0
 
-        # Representative docs: top 5 by upvotes
-        top_posts = topic_posts.nlargest(5, "upvotes")
+        # Representative docs: prefer high-pain posts, then by upvotes
+        if "pain_score" in topic_posts.columns:
+            top_posts = topic_posts.sort_values(
+                ["pain_score", "upvotes"], ascending=[False, False]
+            ).head(5)
+        else:
+            top_posts = topic_posts.nlargest(5, "upvotes")
         representative_docs = []
         for _, post_row in top_posts.iterrows():
             doc = post_row["document"]

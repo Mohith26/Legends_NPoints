@@ -125,6 +125,7 @@ class LabelStory(Base):
     failed_solutions = Column(JSON, nullable=True)
     build_legends_angle = Column(Text, nullable=True)
     representative_quotes = Column(JSON, nullable=True)
+    micro_personas = Column(JSON, nullable=True)
 
     label = relationship("ParentLabel", back_populates="stories")
 

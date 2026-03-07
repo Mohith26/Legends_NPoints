@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useLabel } from "../hooks/useLabels";
+import { useLabel, useLabelPosts } from "../hooks/useLabels";
+import PostTable from "./PostTable";
 import type { StoryDetail } from "../types";
 
 function StoryCard({ story }: { story: StoryDetail }) {
@@ -68,6 +70,33 @@ function StoryCard({ story }: { story: StoryDetail }) {
         </div>
       )}
 
+      {story.micro_personas && story.micro_personas.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+            Micro-Personas (Ad Targeting)
+          </h4>
+          <div className="space-y-3">
+            {story.micro_personas.map((persona, i) => (
+              <div key={i} className="bg-purple-50 rounded-lg p-3">
+                <p className="text-sm font-medium text-purple-900">
+                  {persona.description}
+                </p>
+                {persona.child_age && (
+                  <span className="text-xs text-purple-600 mt-1 inline-block mr-3">
+                    Age: {persona.child_age}
+                  </span>
+                )}
+                {persona.specific_trigger && (
+                  <p className="text-xs text-purple-700 mt-1 italic">
+                    Trigger: {persona.specific_trigger}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {story.build_legends_angle && (
         <div className="bg-indigo-50 rounded-lg p-4">
           <h4 className="text-sm font-semibold text-indigo-800 mb-1">
@@ -82,7 +111,10 @@ function StoryCard({ story }: { story: StoryDetail }) {
 
 function LabelDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: label, isLoading, error } = useLabel(Number(id));
+  const labelId = Number(id);
+  const { data: label, isLoading, error } = useLabel(labelId);
+  const [postsPage, setPostsPage] = useState(1);
+  const { data: postsData } = useLabelPosts(labelId, postsPage);
 
   if (isLoading) {
     return (
@@ -245,6 +277,24 @@ function LabelDetail() {
           <StoryCard key={story.id} story={story} />
         ))}
       </div>
+
+      {/* Source Posts */}
+      {postsData && postsData.total > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">
+            Source Reddit Posts ({postsData.total})
+          </h2>
+          <div className="bg-white rounded-lg border border-gray-200">
+            <PostTable
+              posts={postsData.posts}
+              total={postsData.total}
+              page={postsData.page}
+              pageSize={postsData.page_size}
+              onPageChange={setPostsPage}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

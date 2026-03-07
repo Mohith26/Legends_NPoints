@@ -138,6 +138,40 @@ BUILD_LEGENDS_EXCLUDE_PATTERNS = [
 ]
 
 
+# Pain signal keywords — phrases indicating struggle, desperation, negative emotion.
+# Used to prioritize negative/complaint posts over positive/advice posts.
+PAIN_SIGNAL_KEYWORDS = [
+    "nothing works", "at my wits end", "at my wit's end", "desperate",
+    "don't know what to do", "i don't know what", "i'm lost",
+    "struggling", "exhausted", "can't do this", "breaking point",
+    "tried everything", "what am i doing wrong", "falling apart",
+    "don't know how", "going to break", "scared", "worried sick",
+    "can't handle", "out of control", "every day is a battle",
+    "i'm failing", "feel like a failure", "helpless", "hopeless",
+    "at a loss", "no idea what to do", "cried", "crying",
+    "so frustrated", "ready to give up", "it's getting worse",
+    "rock bottom", "end of my rope", "i can't take it",
+    "tearing our family apart", "ruining", "destroying",
+    "i hate that", "breaks my heart", "kills me to see",
+    "watching him struggle", "watching her struggle",
+]
+
+_PAIN_PATTERN = re.compile(
+    r'\b(?:' + '|'.join(re.escape(kw) for kw in sorted(PAIN_SIGNAL_KEYWORDS, key=len, reverse=True)) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def compute_pain_score(text: str) -> float:
+    """Score how much a post expresses pain/struggle (0.0-1.0)."""
+    if not text:
+        return 0.0
+    matches = _PAIN_PATTERN.findall(text.lower())
+    # Normalize: each unique keyword match adds signal, cap at 1.0
+    unique_matches = len(set(matches))
+    return min(1.0, unique_matches / 3.0)
+
+
 def _build_keyword_pattern(keyword_groups: dict[str, list[str]]) -> re.Pattern:
     """Build a single compiled regex from all keyword groups."""
     all_keywords = []
@@ -297,5 +331,11 @@ def load_and_preprocess(
             f"{filter_metrics['total_after_filtering']} documents "
             f"({filter_metrics['filter_pass_rate']}% pass rate)"
         )
+
+    # Compute pain signal score for each document
+    df["pain_score"] = df["document"].apply(compute_pain_score)
+    pain_posts = (df["pain_score"] > 0).sum()
+    metrics["pain_signal_posts"] = int(pain_posts)
+    logger.info(f"Pain signal: {pain_posts}/{len(df)} posts have pain keywords")
 
     return df, metrics

@@ -238,18 +238,29 @@ STORY_SYSTEM_PROMPT = """You are a customer research analyst for Build Legends, 
 
 You are analyzing a cluster of Reddit posts from parents who label their child as "{label_name}". These posts share a common STORY PATTERN — a specific struggle or scenario within this label.
 
+IMPORTANT: Focus on the NEGATIVE posts — parents expressing pain, frustration, desperation. Ignore advice, success stories, or positive anecdotes. We want raw parent pain that drives them to seek help.
+
 Extract the story pattern from these posts. Respond with a JSON object:
 
 {{
   "title": "A vivid 5-10 word title for this story (e.g., 'Gifted kid melts down over imperfect homework')",
-  "summary": "2-3 sentences describing this specific struggle pattern. Be vivid and specific, not clinical.",
-  "pain_points": ["3-5 specific pain points in parent's own words"],
+  "summary": "2-3 sentences describing this specific struggle pattern. Be vivid and specific, not clinical. Use the desperate language parents actually use.",
+  "pain_points": ["3-5 specific pain points — pull near-direct quotes from the posts. These should be raw, emotional, and hit hard."],
   "failed_solutions": [
     {{"solution": "What they tried", "why_failed": "Why it fell short"}}
   ],
   "build_legends_angle": "2-3 sentences on how Build Legends addresses this specific story. Reference product mechanics: daily 5-min missions, confidence streaks, character growth, parent dashboard.",
-  "representative_quotes": ["2-3 direct quotes or close paraphrases from the posts that capture this story"]
+  "representative_quotes": ["2-3 direct quotes or close paraphrases from the posts — pick the most visceral, desperate ones"],
+  "micro_personas": [
+    {{
+      "description": "A hyper-specific parent profile with 3 layers: (1) child's specific challenge, (2) the specific trigger scenario, (3) the parent's life circumstance. Example: 'Former teacher turned homeschool mom of a gifted but emotionally dysregulated 9yo after public school kept calling her in weekly — she gave up her career to get this right'",
+      "child_age": "e.g., 8-10",
+      "specific_trigger": "The exact daily moment that breaks down — e.g., 'Every night at homework time he freezes, then sobs, then screams I'm stupid'"
+    }}
+  ]
 }}
+
+Include 2-3 micro_personas per story. Make them feel like real, specific people — not demographics. Layer specificity: child diagnosis + trigger scenario + parent sacrifice/circumstance.
 
 Be specific and grounded in the actual post content. Use real parent language."""
 
@@ -360,9 +371,13 @@ def _subcluster_label(
     Returns list of sub-cluster dicts with post_ids, keywords, representative docs.
     """
     label_df = df[df["post_id"].isin(post_ids)].copy()
+    has_pain = "pain_score" in label_df.columns
     if len(label_df) < 10:
         # Too few for sub-clustering — return as single story
-        top_posts = label_df.nlargest(min(5, len(label_df)), "upvotes")
+        if has_pain:
+            top_posts = label_df.sort_values(["pain_score", "upvotes"], ascending=[False, False]).head(5)
+        else:
+            top_posts = label_df.nlargest(min(5, len(label_df)), "upvotes")
         return [{
             "post_ids": label_df["post_id"].tolist(),
             "post_count": len(label_df),
@@ -414,8 +429,13 @@ def _subcluster_label(
         except Exception:
             keywords = []
 
-        # Representative docs (top by upvotes)
-        top_posts = cluster_posts.nlargest(min(5, len(cluster_posts)), "upvotes")
+        # Representative docs: prefer high-pain posts, then by upvotes
+        if has_pain:
+            top_posts = cluster_posts.sort_values(
+                ["pain_score", "upvotes"], ascending=[False, False]
+            ).head(min(5, len(cluster_posts)))
+        else:
+            top_posts = cluster_posts.nlargest(min(5, len(cluster_posts)), "upvotes")
         rep_docs = [
             {"post_id": int(r["post_id"]), "excerpt": r["document"][:500], "upvotes": int(r["upvotes"])}
             for _, r in top_posts.iterrows()
@@ -471,6 +491,7 @@ Representative Post Excerpts:
             "failed_solutions": result.get("failed_solutions", []),
             "build_legends_angle": result.get("build_legends_angle", ""),
             "representative_quotes": result.get("representative_quotes", []),
+            "micro_personas": result.get("micro_personas", []),
             "post_count": sub_cluster["post_count"],
             "input_tokens": response.usage.prompt_tokens if response.usage else 0,
             "output_tokens": response.usage.completion_tokens if response.usage else 0,
@@ -671,6 +692,7 @@ def run_label_analysis(
                 "failed_solutions": story.get("failed_solutions"),
                 "build_legends_angle": story.get("build_legends_angle", ""),
                 "representative_quotes": story.get("representative_quotes"),
+                "micro_personas": story.get("micro_personas"),
             })
             total_stories += 1
 

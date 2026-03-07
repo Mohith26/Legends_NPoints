@@ -107,6 +107,12 @@ class MarketingInsightsSchema(BaseModel):
     emotional_triggers: list[str] = []
 
 
+class MicroPersonaSchema(BaseModel):
+    description: str
+    child_age: str = ""
+    specific_trigger: str = ""
+
+
 class StorySummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -128,6 +134,7 @@ class StoryDetailResponse(BaseModel):
     failed_solutions: list[FailedSolutionSchema] | None = None
     build_legends_angle: str | None = None
     representative_quotes: list[str] | None = None
+    micro_personas: list[MicroPersonaSchema] | None = None
 
 
 class LabelSummary(BaseModel):
