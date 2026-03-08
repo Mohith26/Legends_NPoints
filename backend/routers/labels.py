@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import case, func
+from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -143,7 +143,8 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Pre-fetch top posts for the label as fallback when stories lack source_post_ids
+    # Pre-fetch top posts for the label as fallback when stories lack source_post_ids.
+    # Try PostLabel join first; if empty, fall back to phrase search on raw_posts.
     label_fallback_posts = (
         db.query(RawPost)
         .join(PostLabel, PostLabel.raw_post_id == RawPost.id)
@@ -152,6 +153,18 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         .limit(5)
         .all()
     )
+    if not label_fallback_posts and label.example_phrases:
+        phrases = [p.strip() for p in label.example_phrases if len(p.strip()) > 3][:6]
+        if phrases:
+            label_fallback_posts = (
+                db.query(RawPost)
+                .filter(
+                    or_(*[RawPost.title.ilike(f"%{p}%") for p in phrases])
+                )
+                .order_by(RawPost.upvotes.desc())
+                .limit(5)
+                .all()
+            )
 
     story_details = []
     for s in stories:
