@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useLabel, useLabelPosts } from "../hooks/useLabels";
 import PostTable from "./PostTable";
-import type { StoryDetail, SourcePost } from "../types";
+import type { StoryDetail } from "../types";
 
 function StoryCard({ story }: { story: StoryDetail }) {
   return (
