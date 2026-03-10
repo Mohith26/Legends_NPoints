@@ -202,7 +202,8 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                 for p in label_fallback_posts
             ]
 
-        # Match each pain point to the best-fitting source post by keyword overlap
+        # Match each pain point to the best-fitting source post by keyword overlap.
+        # Always assign a source post — fall back to highest-upvoted if no keyword match.
         enriched_pain_points = None
         if s.pain_points:
             enriched_pain_points = []
@@ -218,8 +219,9 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                         if score > best_score:
                             best_score = score
                             best_post = sp
-                    if best_score < 2:
-                        best_post = None
+                    # If no keyword overlap, fall back to highest-upvoted source post
+                    if best_score == 0:
+                        best_post = max(source_posts, key=lambda p: p.upvotes)
                 enriched_pain_points.append(PainPointSchema(
                     text=pp_str,
                     source_post=best_post,
