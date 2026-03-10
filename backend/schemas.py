@@ -107,6 +107,14 @@ class MarketingInsightsSchema(BaseModel):
     emotional_triggers: list[str] = []
 
 
+class SourcePostSchema(BaseModel):
+    id: int
+    title: str
+    url: str | None
+    subreddit: str
+    upvotes: int
+
+
 class MicroPersonaSchema(BaseModel):
     # New 5-field format
     label: str = ""
@@ -114,6 +122,7 @@ class MicroPersonaSchema(BaseModel):
     trigger_scenario: str = ""
     parent_circumstance: str = ""
     ad_hook: str = ""
+    source_post: SourcePostSchema | None = None
     # Backward compat with old format
     description: str = ""
     child_age: str = ""
@@ -128,14 +137,6 @@ class StorySummary(BaseModel):
     summary: str | None
     post_count: int
     build_legends_angle: str | None = None
-
-
-class SourcePostSchema(BaseModel):
-    id: int
-    title: str
-    url: str | None
-    subreddit: str
-    upvotes: int
 
 
 class PainPointSchema(BaseModel):

@@ -50,6 +50,21 @@ function PersonaCard({ persona }: { persona: MicroPersona }) {
               </p>
             </div>
           )}
+          {persona.source_post?.url && (
+            <div className="pt-2 border-t border-gray-100 mt-2">
+              <a
+                href={persona.source_post.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-purple-600 hover:text-purple-800 hover:underline flex items-center gap-1"
+              >
+                <span className="text-gray-400">r/{persona.source_post.subreddit}</span>
+                <span>&mdash;</span>
+                <span className="truncate">{persona.source_post.title}</span>
+                <span className="flex-shrink-0">&rarr;</span>
+              </a>
+            </div>
+          )}
         </div>
       </div>
     );

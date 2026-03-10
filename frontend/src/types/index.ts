@@ -107,6 +107,7 @@ export interface MicroPersona {
   trigger_scenario?: string;
   parent_circumstance?: string;
   ad_hook?: string;
+  source_post?: SourcePost | null;
   // Old format (backward compat)
   description?: string;
   child_age?: string;

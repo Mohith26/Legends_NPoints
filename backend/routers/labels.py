@@ -173,10 +173,6 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         if s.failed_solutions:
             failed_solutions = [FailedSolutionSchema(**fs) for fs in s.failed_solutions]
 
-        micro_personas = None
-        if s.micro_personas:
-            micro_personas = [MicroPersonaSchema(**mp) for mp in s.micro_personas]
-
         source_posts = []
         if s.source_post_ids:
             posts = db.query(RawPost).filter(RawPost.id.in_(s.source_post_ids)).all()
@@ -226,6 +222,31 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                     text=pp_str,
                     source_post=best_post,
                 ))
+
+        # Match each micro-persona to the best-fitting source post by keyword overlap
+        micro_personas = None
+        if s.micro_personas:
+            micro_personas = []
+            for mp in s.micro_personas:
+                # Combine all persona text fields for matching
+                persona_text = " ".join(
+                    mp.get(f, "") for f in
+                    ("child_profile", "trigger_scenario", "parent_circumstance", "description", "specific_trigger")
+                    if mp.get(f)
+                ).lower()
+                best_post = None
+                if source_posts and persona_text:
+                    persona_words = set(persona_text.split())
+                    best_score = 0
+                    for sp in source_posts:
+                        title_words = set(sp.title.lower().split())
+                        score = len(persona_words & title_words)
+                        if score > best_score:
+                            best_score = score
+                            best_post = sp
+                    if best_score == 0:
+                        best_post = max(source_posts, key=lambda p: p.upvotes)
+                micro_personas.append(MicroPersonaSchema(**mp, source_post=best_post))
 
         story_details.append(StoryDetailResponse(
             id=s.id,
