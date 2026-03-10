@@ -108,7 +108,14 @@ class MarketingInsightsSchema(BaseModel):
 
 
 class MicroPersonaSchema(BaseModel):
-    description: str
+    # New 5-field format
+    label: str = ""
+    child_profile: str = ""
+    trigger_scenario: str = ""
+    parent_circumstance: str = ""
+    ad_hook: str = ""
+    # Backward compat with old format
+    description: str = ""
     child_age: str = ""
     specific_trigger: str = ""
 
@@ -147,6 +154,7 @@ class StoryDetailResponse(BaseModel):
     failed_solutions: list[FailedSolutionSchema] | None = None
     build_legends_angle: str | None = None
     representative_quotes: list[str] | None = None
+    visceral_quotes: list[str] | None = None
     micro_personas: list[MicroPersonaSchema] | None = None
     source_posts: list[SourcePostSchema] = []
 

@@ -16,10 +16,15 @@ export function useLabel(id: number) {
   });
 }
 
-export function useLabelPosts(labelId: number, page = 1, pageSize = 20) {
+export function useLabelPosts(
+  labelId: number,
+  page = 1,
+  pageSize = 20,
+  sort: "upvotes" | "pain" = "pain"
+) {
   return useQuery({
-    queryKey: ["labelPosts", labelId, page, pageSize],
-    queryFn: () => getLabelPosts(labelId, page, pageSize),
+    queryKey: ["labelPosts", labelId, page, pageSize, sort],
+    queryFn: () => getLabelPosts(labelId, page, pageSize, sort),
     enabled: !!labelId,
   });
 }

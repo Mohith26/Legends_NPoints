@@ -14,11 +14,12 @@ export async function getLabel(id: number): Promise<LabelDetail> {
 export async function getLabelPosts(
   labelId: number,
   page = 1,
-  pageSize = 20
+  pageSize = 20,
+  sort: "upvotes" | "pain" = "pain"
 ): Promise<PostListResponse> {
   const { data } = await client.get<PostListResponse>(
     `/api/labels/${labelId}/posts`,
-    { params: { page, page_size: pageSize } }
+    { params: { page, page_size: pageSize, sort } }
   );
   return data;
 }

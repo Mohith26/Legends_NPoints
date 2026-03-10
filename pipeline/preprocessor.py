@@ -338,4 +338,16 @@ def load_and_preprocess(
     metrics["pain_signal_posts"] = int(pain_posts)
     logger.info(f"Pain signal: {pain_posts}/{len(df)} posts have pain keywords")
 
+    # In Build Legends mode, remove posts with zero pain signal
+    if filter_mode == "build_legends":
+        before_pain_filter = len(df)
+        df = df[df["pain_score"] > 0.0].reset_index(drop=True)
+        pain_filtered_count = before_pain_filter - len(df)
+        metrics["pain_filtered_count"] = pain_filtered_count
+        metrics["pain_retained_count"] = len(df)
+        logger.info(
+            f"Pain threshold filter: {before_pain_filter} -> {len(df)} documents "
+            f"(removed {pain_filtered_count} zero-pain posts)"
+        )
+
     return df, metrics

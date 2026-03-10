@@ -2,7 +2,78 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useLabel, useLabelPosts } from "../hooks/useLabels";
 import PostTable from "./PostTable";
-import type { StoryDetail } from "../types";
+import type { MicroPersona, StoryDetail } from "../types";
+
+function PersonaCard({ persona }: { persona: MicroPersona }) {
+  const isNewFormat = !!(persona.label || persona.child_profile || persona.trigger_scenario);
+
+  if (isNewFormat) {
+    return (
+      <div className="bg-white rounded-lg border border-purple-200 shadow-sm overflow-hidden">
+        {persona.label && (
+          <div className="bg-purple-700 text-white px-4 py-2 text-sm font-bold">
+            {persona.label}
+          </div>
+        )}
+        <div className="p-4 space-y-3">
+          {persona.child_profile && (
+            <div>
+              <p className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-1">
+                The Child
+              </p>
+              <p className="text-sm text-gray-800">{persona.child_profile}</p>
+            </div>
+          )}
+          {persona.trigger_scenario && (
+            <div>
+              <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-1">
+                The Trigger
+              </p>
+              <p className="text-sm text-gray-800">{persona.trigger_scenario}</p>
+            </div>
+          )}
+          {persona.parent_circumstance && (
+            <div>
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-wide mb-1">
+                The Parent
+              </p>
+              <p className="text-sm text-gray-800">{persona.parent_circumstance}</p>
+            </div>
+          )}
+          {persona.ad_hook && (
+            <div className="bg-indigo-50 rounded-lg px-3 py-2 mt-2">
+              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wide mb-1">
+                Ad Hook
+              </p>
+              <p className="text-sm font-medium text-indigo-900 italic">
+                &ldquo;{persona.ad_hook}&rdquo;
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Old format fallback
+  return (
+    <div className="bg-purple-50 rounded-lg p-3">
+      <p className="text-sm font-medium text-purple-900">
+        {persona.description}
+      </p>
+      {persona.child_age && (
+        <span className="text-xs text-purple-600 mt-1 inline-block mr-3">
+          Age: {persona.child_age}
+        </span>
+      )}
+      {persona.specific_trigger && (
+        <p className="text-xs text-purple-700 mt-1 italic">
+          Trigger: {persona.specific_trigger}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function StoryCard({ story }: { story: StoryDetail }) {
   return (
@@ -16,6 +87,25 @@ function StoryCard({ story }: { story: StoryDetail }) {
 
       {story.summary && (
         <p className="text-gray-600 mb-4">{story.summary}</p>
+      )}
+
+      {/* Visceral Quotes — ad-ready quotes section */}
+      {story.visceral_quotes && story.visceral_quotes.length > 0 && (
+        <div className="mb-5">
+          <h4 className="text-sm font-semibold text-red-700 mb-2">
+            Ad-Ready Quotes
+          </h4>
+          <div className="space-y-2">
+            {story.visceral_quotes.map((quote, i) => (
+              <blockquote
+                key={i}
+                className="text-base text-red-900 bg-red-50 border-l-4 border-red-400 pl-4 pr-3 py-3 rounded-r-lg italic font-medium"
+              >
+                &ldquo;{quote}&rdquo;
+              </blockquote>
+            ))}
+          </div>
+        </div>
       )}
 
       {story.pain_points && story.pain_points.length > 0 && (
@@ -82,26 +172,12 @@ function StoryCard({ story }: { story: StoryDetail }) {
 
       {story.micro_personas && story.micro_personas.length > 0 && (
         <div className="mb-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
             Micro-Personas (Ad Targeting)
           </h4>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {story.micro_personas.map((persona, i) => (
-              <div key={i} className="bg-purple-50 rounded-lg p-3">
-                <p className="text-sm font-medium text-purple-900">
-                  {persona.description}
-                </p>
-                {persona.child_age && (
-                  <span className="text-xs text-purple-600 mt-1 inline-block mr-3">
-                    Age: {persona.child_age}
-                  </span>
-                )}
-                {persona.specific_trigger && (
-                  <p className="text-xs text-purple-700 mt-1 italic">
-                    Trigger: {persona.specific_trigger}
-                  </p>
-                )}
-              </div>
+              <PersonaCard key={i} persona={persona} />
             ))}
           </div>
         </div>
@@ -154,7 +230,8 @@ function LabelDetail() {
   const labelId = Number(id);
   const { data: label, isLoading, error } = useLabel(labelId);
   const [postsPage, setPostsPage] = useState(1);
-  const { data: postsData } = useLabelPosts(labelId, postsPage);
+  const [postsSort, setPostsSort] = useState<"pain" | "upvotes">("pain");
+  const { data: postsData } = useLabelPosts(labelId, postsPage, 20, postsSort);
 
   if (isLoading) {
     return (
@@ -321,9 +398,33 @@ function LabelDetail() {
       {/* Source Posts */}
       {postsData && postsData.total > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
-            Source Reddit Posts ({postsData.total})
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">
+              Source Reddit Posts ({postsData.total})
+            </h2>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+              <button
+                onClick={() => { setPostsSort("pain"); setPostsPage(1); }}
+                className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+                  postsSort === "pain"
+                    ? "bg-white text-red-700 shadow-sm font-medium"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Most Painful
+              </button>
+              <button
+                onClick={() => { setPostsSort("upvotes"); setPostsPage(1); }}
+                className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+                  postsSort === "upvotes"
+                    ? "bg-white text-gray-900 shadow-sm font-medium"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Most Upvoted
+              </button>
+            </div>
+          </div>
           <div className="bg-white rounded-lg border border-gray-200">
             <PostTable
               posts={postsData.posts}

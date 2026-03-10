@@ -101,9 +101,16 @@ export interface StorySummary {
 }
 
 export interface MicroPersona {
-  description: string;
-  child_age: string;
-  specific_trigger: string;
+  // New 5-field format
+  label?: string;
+  child_profile?: string;
+  trigger_scenario?: string;
+  parent_circumstance?: string;
+  ad_hook?: string;
+  // Old format (backward compat)
+  description?: string;
+  child_age?: string;
+  specific_trigger?: string;
 }
 
 export interface SourcePost {
@@ -128,6 +135,7 @@ export interface StoryDetail {
   failed_solutions: FailedSolution[] | null;
   build_legends_angle: string | null;
   representative_quotes: string[] | null;
+  visceral_quotes: string[] | null;
   micro_personas: MicroPersona[] | null;
   source_posts: SourcePost[];
 }

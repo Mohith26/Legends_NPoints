@@ -234,6 +234,7 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
             failed_solutions=failed_solutions,
             build_legends_angle=s.build_legends_angle,
             representative_quotes=s.representative_quotes,
+            visceral_quotes=getattr(s, "visceral_quotes", None),
             micro_personas=micro_personas,
             source_posts=source_posts,
         ))
