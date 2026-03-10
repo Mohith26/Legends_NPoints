@@ -114,12 +114,17 @@ export interface SourcePost {
   upvotes: number;
 }
 
+export interface PainPoint {
+  text: string;
+  source_post: SourcePost | null;
+}
+
 export interface StoryDetail {
   id: number;
   title: string;
   summary: string | null;
   post_count: number;
-  pain_points: string[] | null;
+  pain_points: PainPoint[] | null;
   failed_solutions: FailedSolution[] | null;
   build_legends_angle: string | null;
   representative_quotes: string[] | null;

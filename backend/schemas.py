@@ -131,6 +131,11 @@ class SourcePostSchema(BaseModel):
     upvotes: int
 
 
+class PainPointSchema(BaseModel):
+    text: str
+    source_post: SourcePostSchema | None = None
+
+
 class StoryDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -138,7 +143,7 @@ class StoryDetailResponse(BaseModel):
     title: str
     summary: str | None
     post_count: int
-    pain_points: list[str] | None = None
+    pain_points: list[PainPointSchema] | None = None
     failed_solutions: list[FailedSolutionSchema] | None = None
     build_legends_angle: str | None = None
     representative_quotes: list[str] | None = None

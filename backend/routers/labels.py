@@ -12,6 +12,7 @@ from backend.schemas import (
     LabelSummary,
     MarketingInsightsSchema,
     MicroPersonaSchema,
+    PainPointSchema,
     PostListResponse,
     PostSummary,
     SourcePostSchema,
@@ -201,12 +202,35 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                 for p in label_fallback_posts
             ]
 
+        # Match each pain point to the best-fitting source post by keyword overlap
+        enriched_pain_points = None
+        if s.pain_points:
+            enriched_pain_points = []
+            for pp_text in s.pain_points:
+                pp_str = pp_text if isinstance(pp_text, str) else str(pp_text)
+                best_post = None
+                if source_posts:
+                    pp_words = set(pp_str.lower().split())
+                    best_score = 0
+                    for sp in source_posts:
+                        title_words = set(sp.title.lower().split())
+                        score = len(pp_words & title_words)
+                        if score > best_score:
+                            best_score = score
+                            best_post = sp
+                    if best_score < 2:
+                        best_post = None
+                enriched_pain_points.append(PainPointSchema(
+                    text=pp_str,
+                    source_post=best_post,
+                ))
+
         story_details.append(StoryDetailResponse(
             id=s.id,
             title=s.title,
             summary=s.summary,
             post_count=s.post_count,
-            pain_points=s.pain_points,
+            pain_points=enriched_pain_points,
             failed_solutions=failed_solutions,
             build_legends_angle=s.build_legends_angle,
             representative_quotes=s.representative_quotes,

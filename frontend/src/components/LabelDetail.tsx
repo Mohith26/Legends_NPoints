@@ -27,9 +27,19 @@ function StoryCard({ story }: { story: StoryDetail }) {
             {story.pain_points.map((point, i) => (
               <li
                 key={i}
-                className="text-sm text-amber-800 bg-amber-50 px-3 py-2 rounded"
+                className="text-sm text-amber-800 bg-amber-50 px-3 py-2 rounded flex items-start justify-between gap-2"
               >
-                &ldquo;{point}&rdquo;
+                <span>&ldquo;{point.text}&rdquo;</span>
+                {point.source_post?.url && (
+                  <a
+                    href={point.source_post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-amber-600 hover:text-amber-900 flex-shrink-0 underline"
+                  >
+                    r/{point.source_post.subreddit} &rarr;
+                  </a>
+                )}
               </li>
             ))}
           </ul>
