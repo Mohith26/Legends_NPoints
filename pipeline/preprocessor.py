@@ -154,6 +154,33 @@ PAIN_SIGNAL_KEYWORDS = [
     "tearing our family apart", "ruining", "destroying",
     "i hate that", "breaks my heart", "kills me to see",
     "watching him struggle", "watching her struggle",
+    # Venting / raw desperation
+    "i'm done", "i give up", "can't anymore", "losing my mind",
+    "i want to scream", "sobbing", "bawling", "at my limit",
+    "i'm drowning", "suffocating", "overwhelmed", "burned out",
+    "burnt out", "no one understands", "completely alone",
+    "marriage is suffering", "divorce", "about to snap",
+    "hate myself", "worst parent", "terrible mother", "terrible father",
+    "what did i do wrong", "is this my fault", "blame myself",
+    "therapist said", "psychiatrist", "medication isn't working",
+    "meds aren't helping", "suspended", "expelled", "called me in",
+    "school keeps calling", "principal called", "teacher called",
+]
+
+# Positive/advice/success signals — posts matching these are likely NOT raw pain.
+# Used to penalize the pain score of advice, success stories, and neutral posts.
+POSITIVE_SIGNAL_KEYWORDS = [
+    "what worked for us", "this is what helped", "success story",
+    "finally worked", "game changer", "breakthrough", "turned a corner",
+    "so proud", "i'm so happy", "grateful", "thankful",
+    "here's what i recommend", "my advice", "tip for parents",
+    "pro tip", "psa for parents", "just wanted to share",
+    "update: things are better", "things are improving",
+    "it gets better", "hang in there", "you've got this",
+    "we figured it out", "solved it", "problem solved",
+    "sharing what works", "in case it helps", "hope this helps",
+    "celebration", "brag", "win for today", "small victory",
+    "good news", "positive update", "progress report",
 ]
 
 _PAIN_PATTERN = re.compile(
@@ -161,15 +188,28 @@ _PAIN_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+_POSITIVE_PATTERN = re.compile(
+    r'\b(?:' + '|'.join(re.escape(kw) for kw in sorted(POSITIVE_SIGNAL_KEYWORDS, key=len, reverse=True)) + r')\b',
+    re.IGNORECASE,
+)
+
 
 def compute_pain_score(text: str) -> float:
-    """Score how much a post expresses pain/struggle (0.0-1.0)."""
+    """Score how much a post expresses pain/struggle (0.0-1.0).
+
+    Pain keywords add to the score, positive/advice keywords subtract.
+    This aggressively filters out success stories, advice posts, and neutral content.
+    """
     if not text:
         return 0.0
-    matches = _PAIN_PATTERN.findall(text.lower())
-    # Normalize: each unique keyword match adds signal, cap at 1.0
-    unique_matches = len(set(matches))
-    return min(1.0, unique_matches / 3.0)
+    lower = text.lower()
+    pain_matches = _PAIN_PATTERN.findall(lower)
+    positive_matches = _POSITIVE_PATTERN.findall(lower)
+    unique_pain = len(set(pain_matches))
+    unique_positive = len(set(positive_matches))
+    # Net pain: each positive keyword cancels out a pain keyword
+    net_pain = max(0, unique_pain - unique_positive)
+    return min(1.0, net_pain / 3.0)
 
 
 def _build_keyword_pattern(keyword_groups: dict[str, list[str]]) -> re.Pattern:

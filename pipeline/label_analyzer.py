@@ -238,34 +238,48 @@ STORY_SYSTEM_PROMPT = """You are a customer research analyst for Build Legends, 
 
 You are analyzing a cluster of Reddit posts from parents who label their child as "{label_name}". These posts share a common STORY PATTERN — a specific struggle or scenario within this label.
 
-IMPORTANT: Focus on the NEGATIVE posts — parents expressing pain, frustration, desperation. Ignore advice, success stories, or positive anecdotes. We want raw parent pain that drives them to seek help.
+CRITICAL RULES:
+1. ONLY use NEGATIVE posts — parents venting, desperate, exhausted, at their breaking point. COMPLETELY IGNORE any advice posts, success stories, positive updates, or neutral questions.
+2. Every quote, pain point, and persona detail MUST be grounded in the ACTUAL TEXT of the posts provided. Do NOT invent details. Pull real language from real posts.
+3. Micro-personas must be built from SPECIFIC details mentioned in individual posts — real ages, real situations, real sacrifices mentioned by the parent.
 
-Extract the story pattern from these posts. Respond with a JSON object:
+Extract the story pattern. Respond with a JSON object:
 
 {{
-  "title": "A vivid 5-10 word title for this story (e.g., 'Gifted kid melts down over imperfect homework')",
-  "summary": "2-3 sentences describing this specific struggle pattern. Be vivid and specific, not clinical. Use the desperate language parents actually use.",
-  "pain_points": ["3-5 specific pain points — pull near-direct quotes from the posts. These should be raw, emotional, and hit hard."],
+  "title": "A vivid 5-10 word title capturing the raw struggle (e.g., 'Gifted kid melts down over imperfect homework')",
+  "summary": "2-3 sentences describing this specific struggle. Write it like a parent would say it — desperate, raw, not clinical.",
+  "pain_points": ["3-5 specific pain points. Each one should be a near-direct quote or close paraphrase from the posts — raw, emotional language that hits hard. NOT generic summaries."],
   "failed_solutions": [
-    {{"solution": "What they tried", "why_failed": "Why it fell short"}}
+    {{"solution": "What they tried (be specific — name the therapy, the book, the strategy)", "why_failed": "Why it fell short, in the parent's own frustrated words"}}
   ],
-  "build_legends_angle": "2-3 sentences on how Build Legends addresses this specific story. Reference product mechanics: daily 5-min missions, confidence streaks, character growth, parent dashboard.",
-  "representative_quotes": ["2-3 direct quotes or close paraphrases from the posts — pick the most visceral, desperate ones"],
-  "visceral_quotes": ["3-5 EXACT quotes from the post excerpts that are so raw and emotional they could be used word-for-word in a Meta ad. Pick the ones where parents sound most desperate, most exhausted, most like they need help RIGHT NOW. These should make the reader think 'that's exactly how I feel'. Include enough context so each quote stands alone."],
+  "build_legends_angle": "2-3 sentences on how Build Legends addresses this specific story. Reference: daily 5-min missions, confidence streaks, character growth, parent dashboard.",
+  "representative_quotes": ["2-3 direct quotes from the posts — pick the most desperate ones"],
+  "visceral_quotes": ["3-5 EXACT quotes pulled DIRECTLY from the post excerpts above. These must be real sentences written by the parent — so raw and emotional they could be pasted word-for-word into a Meta ad. The reader should think 'that's exactly how I feel'. Pick the most gut-wrenching lines. Include enough surrounding context that each quote stands alone as a complete thought."],
   "micro_personas": [
     {{
-      "label": "A 3-5 word name for this persona (e.g., 'Burnt-Out Homeschool Mom')",
-      "child_profile": "Child's specific diagnosis/label + age + the specific way it manifests (e.g., 'Gifted but emotionally dysregulated 9yo boy who tests 3 grades ahead but can't handle imperfection')",
-      "trigger_scenario": "The EXACT daily moment that breaks this parent — be hyper-specific with time, place, and what happens (e.g., 'Every night at 7pm homework starts and within 10 minutes he's frozen, then sobbing, then screaming I'M STUPID while she stands there helpless')",
-      "parent_circumstance": "The parent's life situation that makes this harder — career sacrifice, relationship strain, isolation, guilt (e.g., 'Former teacher who quit to homeschool after the school kept calling her in weekly — she gave up her career to get this right and it's STILL not working')",
-      "ad_hook": "A one-line ad hook specifically for THIS persona that could open a Meta ad (e.g., 'You didn't quit your job just to watch him melt down every night')"
+      "label": "A 3-5 word persona name that a marketer would use (e.g., 'Burnt-Out Homeschool Mom', 'Single Dad of Explosive 7yo')",
+      "child_profile": "LAYER 1 — The child's SPECIFIC situation pulled from a real post: diagnosis/label + exact age mentioned + the specific way it shows up daily. NOT generic. Example: 'Twice-exceptional 8yo boy — tests at 6th grade level in math but has meltdowns over writing a single sentence. Diagnosed ADHD + gifted, school wants to hold him back.'",
+      "trigger_scenario": "LAYER 2 — The EXACT recurring moment that breaks this parent, pulled from a real post. Include time of day, location, what the child does, and how the parent feels. Example: 'Every single morning before school, he freezes at the door. Then the screaming starts. She's physically dragging him to the car while neighbors watch. By the time she gets to work she's already crying in the parking lot.'",
+      "parent_circumstance": "LAYER 3 — The parent's life situation that compounds the pain, pulled from a real post. Career sacrifices, relationship damage, isolation, financial strain, guilt. Example: 'Quit her teaching job 2 years ago to homeschool after the 4th school meeting in a month. Lost their second income. Husband thinks she's being dramatic. Her own mother says the kid just needs discipline.'",
+      "ad_hook": "A one-line Meta ad opener for THIS exact persona. Should feel like the parent wrote it themselves. Example: 'You didn't quit your career just to watch him scream every morning.'"
     }}
   ]
 }}
 
-Include 4-6 micro_personas per story. Make them feel like real, specific people — not demographics. Each persona MUST have all 5 fields filled with hyper-specific detail. Layer specificity: child's specific challenge → the exact trigger scenario → the parent's life circumstance.
+MICRO-PERSONA RULES:
+- Include 4-6 micro_personas per story.
+- Each persona MUST be built from details in a SPECIFIC post — a real parent's real situation. Do NOT generate generic personas.
+- The 3-layer structure is: child's specific challenge → the exact trigger moment → the parent's life circumstance that makes it worse.
+- Think of it this way: a Meta ad targeting "emotional regulation & meltdowns" is too broad. "Gifted kids with emotional regulation meltdowns" is better. "Homeschooled gifted kids with emotional regulation meltdowns whose mom quit her job to get the education right" — THAT is the level of specificity we need. That's a micro-persona.
+- The ad_hook should be so specific that only THIS persona would stop scrolling.
 
-Be specific and grounded in the actual post content. Use real parent language."""
+VISCERAL QUOTES RULES:
+- These must be EXACT text from the post excerpts, not paraphrased or cleaned up.
+- Pick the lines where you can FEEL the parent's desperation through the screen.
+- A good visceral quote makes you uncomfortable to read because it's so real.
+- These will be used nearly word-for-word in paid advertising. Quality over quantity.
+
+Be brutally specific. Generic = useless. Every field should feel like it came from one real parent's real post."""
 
 
 # ── Phase 1: Regex Label Scan ──────────────────────────────────────────────
@@ -378,15 +392,15 @@ def _subcluster_label(
     if len(label_df) < 10:
         # Too few for sub-clustering — return as single story
         if has_pain:
-            top_posts = label_df.sort_values(["pain_score", "upvotes"], ascending=[False, False]).head(8)
+            top_posts = label_df.sort_values(["pain_score", "upvotes"], ascending=[False, False]).head(10)
         else:
-            top_posts = label_df.nlargest(min(8, len(label_df)), "upvotes")
+            top_posts = label_df.nlargest(min(10, len(label_df)), "upvotes")
         return [{
             "post_ids": label_df["post_id"].tolist(),
             "post_count": len(label_df),
             "keywords": [],
             "representative_docs": [
-                {"post_id": int(r["post_id"]), "excerpt": r["document"][:800], "upvotes": int(r["upvotes"]),
+                {"post_id": int(r["post_id"]), "excerpt": r["document"][:1200], "upvotes": int(r["upvotes"]),
                  "pain_score": float(r.get("pain_score", 0.0)) if has_pain else 0.0}
                 for _, r in top_posts.iterrows()
             ],
@@ -437,11 +451,11 @@ def _subcluster_label(
         if has_pain:
             top_posts = cluster_posts.sort_values(
                 ["pain_score", "upvotes"], ascending=[False, False]
-            ).head(min(8, len(cluster_posts)))
+            ).head(min(10, len(cluster_posts)))
         else:
-            top_posts = cluster_posts.nlargest(min(8, len(cluster_posts)), "upvotes")
+            top_posts = cluster_posts.nlargest(min(10, len(cluster_posts)), "upvotes")
         rep_docs = [
-            {"post_id": int(r["post_id"]), "excerpt": r["document"][:800], "upvotes": int(r["upvotes"]),
+            {"post_id": int(r["post_id"]), "excerpt": r["document"][:1200], "upvotes": int(r["upvotes"]),
              "pain_score": float(r.get("pain_score", 0.0)) if has_pain else 0.0}
             for _, r in top_posts.iterrows()
         ]
@@ -466,12 +480,12 @@ def _extract_story_gpt(
 ) -> dict:
     """Use GPT to extract a story from a sub-cluster."""
     keywords = ", ".join(sub_cluster.get("keywords", [])[:10])
-    docs = sub_cluster.get("representative_docs", [])[:8]
+    docs = sub_cluster.get("representative_docs", [])[:10]
     excerpt_parts = []
     for i, doc in enumerate(docs, 1):
         pain = doc.get("pain_score", 0.0)
         upvotes = doc.get("upvotes", 0)
-        excerpt_parts.append(f"Post {i} (pain: {pain:.1f}, {upvotes} upvotes):\n{doc['excerpt'][:800]}")
+        excerpt_parts.append(f"Post {i} (pain: {pain:.1f}, {upvotes} upvotes):\n{doc['excerpt'][:1200]}")
     excerpts = "\n---\n".join(excerpt_parts)
 
     prompt = STORY_SYSTEM_PROMPT.format(label_name=label_name)

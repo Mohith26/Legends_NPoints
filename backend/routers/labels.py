@@ -263,6 +263,11 @@ _PAIN_KEYWORDS_SQL = [
     "struggling", "exhausted", "tried everything", "what am i doing wrong",
     "breaking point", "can't handle", "out of control", "feel like a failure",
     "breaks my heart", "kills me to see", "it's getting worse",
+    "i'm done", "losing my mind", "sobbing", "overwhelmed", "burnt out",
+    "at my limit", "i give up", "cried", "helpless", "hopeless",
+    "ready to give up", "rock bottom", "end of my rope", "i can't take it",
+    "tearing our family apart", "hate myself", "worst parent",
+    "medication isn't working", "suspended", "expelled", "school keeps calling",
 ]
 
 
