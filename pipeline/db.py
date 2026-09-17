@@ -27,9 +27,16 @@ def get_session(database_url: str) -> Session:
     return SessionLocal()
 
 
+def get_alembic_script() -> ScriptDirectory:
+    """Return the alembic/versions script directory, regardless of the working directory."""
+    config = Config(str(ALEMBIC_INI))
+    config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
+    return ScriptDirectory.from_config(config)
+
+
 def get_alembic_head() -> str:
     """Return the head revision of the alembic/versions script directory."""
-    return ScriptDirectory.from_config(Config(str(ALEMBIC_INI))).get_current_head()
+    return get_alembic_script().get_current_head()
 
 
 def get_database_revision(database_url: str) -> str | None:
@@ -46,7 +53,8 @@ def require_schema_at_head(database_url: str) -> str:
     never runs migrations itself because it runs from a laptop against the
     production database. Returns the head revision on success.
     """
-    head = get_alembic_head()
+    script = get_alembic_script()
+    head = script.get_current_head()
     current = get_database_revision(database_url)
     if current == head:
         return head
@@ -56,6 +64,11 @@ def require_schema_at_head(database_url: str) -> str:
             "the database has no alembic_version table. If it was built by the old "
             "create_all path, run `alembic stamp 006` and then `alembic upgrade head` "
             "(see alembic/README.md); otherwise run `alembic upgrade head`."
+        )
+    elif current not in {revision.revision for revision in script.walk_revisions()}:
+        detail = (
+            f"the database is at revision {current}, which this checkout does not have; "
+            "the checkout is behind the database. Pull the latest migrations, then retry."
         )
     else:
         detail = (
