@@ -15,6 +15,7 @@ from backend.schemas import (
     TopicDetailResponse,
     TopicListResponse,
     TopicSummary,
+    build_tolerant,
 )
 
 router = APIRouter(tags=["topics"])
@@ -84,8 +85,22 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
         avg_upvotes=topic.avg_upvotes,
         keywords=keywords,
         representative_docs=rep_docs,
-        personas=[PersonaSchema(**p) for p in (topic.personas or [])],
-        failed_solutions=[FailedSolutionSchema(**f) for f in (topic.failed_solutions or [])],
+        personas=[
+            build_tolerant(
+                PersonaSchema, p,
+                expected=("type", "child_age_range", "key_struggle"),
+                context=f"topic {topic.id}",
+            )
+            for p in (topic.personas or [])
+        ],
+        failed_solutions=[
+            build_tolerant(
+                FailedSolutionSchema, f,
+                expected=("solution", "why_failed"),
+                context=f"topic {topic.id}",
+            )
+            for f in (topic.failed_solutions or [])
+        ],
         pain_points=topic.pain_points,
         build_legends_angle=topic.build_legends_angle,
     )
@@ -112,9 +127,9 @@ def _pain_sort_expr():
 @router.get("/api/topics/{topic_id}/posts", response_model=PostListResponse)
 def get_topic_posts(
     topic_id: int,
-    page: int = 1,
-    page_size: int = 20,
-    sort: str = Query("upvotes", regex="^(upvotes|pain)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    sort: str = Query("upvotes", pattern="^(upvotes|pain)$"),
     db: Session = Depends(get_db),
 ):
     topic = db.query(Topic).filter(Topic.id == topic_id).first()

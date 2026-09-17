@@ -1,6 +1,35 @@
+import logging
 from datetime import datetime
+from typing import TypeVar
 
 from pydantic import BaseModel, ConfigDict
+
+logger = logging.getLogger(__name__)
+
+_SchemaT = TypeVar("_SchemaT", bound=BaseModel)
+
+
+def build_tolerant(
+    schema_cls: type[_SchemaT],
+    data: dict,
+    *,
+    expected: tuple[str, ...],
+    context: str,
+    **extra,
+) -> _SchemaT:
+    """Build a read schema from stored GPT-produced JSON, tolerating omitted keys.
+
+    Every key in ``expected`` that is absent from ``data`` falls back to the
+    schema's default; a warning naming ``context`` (e.g. the label/story id)
+    is logged so the malformed record can be found without failing the request.
+    """
+    missing = [k for k in expected if k not in data]
+    if missing:
+        logger.warning(
+            "%s: stored %s missing %s; using defaults",
+            context, schema_cls.__name__, ", ".join(missing),
+        )
+    return schema_cls(**data, **extra)
 
 
 class KeywordSchema(BaseModel):
@@ -8,15 +37,17 @@ class KeywordSchema(BaseModel):
     weight: float
 
 
+# Persona/solution schemas are re-validated from stored GPT JSON at read time.
+# Defaults keep one partially formed record from failing the whole response.
 class PersonaSchema(BaseModel):
-    type: str
-    child_age_range: str
-    key_struggle: str
+    type: str = ""
+    child_age_range: str = ""
+    key_struggle: str = ""
 
 
 class FailedSolutionSchema(BaseModel):
-    solution: str
-    why_failed: str
+    solution: str = ""
+    why_failed: str = ""
 
 
 class TopicSummary(BaseModel):
@@ -96,6 +127,7 @@ class StatsResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+    db: str
 
 
 # ── Label Analysis Schemas ──────────────────────────────────────────────────

@@ -18,9 +18,14 @@ from backend.schemas import (
     SourcePostSchema,
     StoryDetailResponse,
     StorySummary,
+    build_tolerant,
 )
 
 router = APIRouter(tags=["labels"])
+
+# Keys a stored micro-persona is expected to carry, by format (see MicroPersonaSchema)
+_MICRO_PERSONA_KEYS_NEW = ("label", "child_profile", "trigger_scenario", "parent_circumstance", "ad_hook")
+_MICRO_PERSONA_KEYS_OLD = ("description", "child_age", "specific_trigger")
 
 
 def _get_latest_run(db: Session) -> PipelineRun | None:
@@ -171,7 +176,14 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
     for s in stories:
         failed_solutions = None
         if s.failed_solutions:
-            failed_solutions = [FailedSolutionSchema(**fs) for fs in s.failed_solutions]
+            failed_solutions = [
+                build_tolerant(
+                    FailedSolutionSchema, fs,
+                    expected=("solution", "why_failed"),
+                    context=f"label {label.id} story {s.id}",
+                )
+                for fs in s.failed_solutions
+            ]
 
         source_posts = []
         if s.source_post_ids:
@@ -246,7 +258,12 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                             best_post = sp
                     if best_score == 0:
                         best_post = max(source_posts, key=lambda p: p.upvotes)
-                micro_personas.append(MicroPersonaSchema(**mp, source_post=best_post))
+                micro_personas.append(build_tolerant(
+                    MicroPersonaSchema, mp,
+                    expected=_MICRO_PERSONA_KEYS_OLD if "description" in mp else _MICRO_PERSONA_KEYS_NEW,
+                    context=f"label {label.id} story {s.id}",
+                    source_post=best_post,
+                ))
 
         story_details.append(StoryDetailResponse(
             id=s.id,
@@ -303,9 +320,9 @@ def _pain_sort_expr():
 @router.get("/api/labels/{label_id}/posts", response_model=PostListResponse)
 def get_label_posts(
     label_id: int,
-    page: int = 1,
-    page_size: int = 20,
-    sort: str = Query("upvotes", regex="^(upvotes|pain)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    sort: str = Query("upvotes", pattern="^(upvotes|pain)$"),
     db: Session = Depends(get_db),
 ):
     label = db.query(ParentLabel).filter(ParentLabel.id == label_id).first()

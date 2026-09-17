@@ -6,7 +6,7 @@ from backend.models import PipelineRun, Topic
 def test_health_check(client):
     response = client.get("/api/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json() == {"status": "ok", "db": "ok"}
 
 
 def test_get_topics_empty(client):
