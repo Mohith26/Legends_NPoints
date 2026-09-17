@@ -34,6 +34,8 @@ frontend/node_modules/
 # Database
 *.db
 *.sqlite3
+legends_npoints_dump.sql
+*.dump
 
 # Alembic
 alembic/versions/__pycache__/
