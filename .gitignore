@@ -34,7 +34,7 @@ frontend/node_modules/
 # Database
 *.db
 *.sqlite3
-*.sql
+legends_npoints_dump.sql
 *.dump
 
 # Alembic
