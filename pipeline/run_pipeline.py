@@ -10,14 +10,16 @@ Usage:
 """
 import argparse
 import logging
+import sys
 import time
 from datetime import datetime, timezone
 
 from pipeline.config import PipelineConfig
 from pipeline.db import (
+    SchemaNotAtHead,
     create_pipeline_run,
-    ensure_tables,
     get_session,
+    require_schema_at_head,
     store_post_topic,
     store_topic,
     update_pipeline_run,
@@ -44,7 +46,11 @@ def main():
     args = parser.parse_args()
 
     config = PipelineConfig()
-    ensure_tables(config.DATABASE_URL)
+    try:
+        require_schema_at_head(config.DATABASE_URL)
+    except SchemaNotAtHead as e:
+        logger.error(str(e))
+        sys.exit(1)
     session = get_session(config.DATABASE_URL)
 
     pipeline_start = time.time()

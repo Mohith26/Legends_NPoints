@@ -6,12 +6,20 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, relationship
+
+# The schema is owned by the Alembic migrations in alembic/versions; these models
+# must describe exactly what those migrations create so that `alembic check` is
+# clean. Columns created by 001 are JSONB in Postgres; columns added by 002-006
+# are plain JSON. The SQLite variant keeps the in-memory test suite working.
+JSONB = postgresql.JSONB().with_variant(JSON(), "sqlite")
 
 
 class Base(DeclarativeBase):
@@ -22,11 +30,11 @@ class RawPost(Base):
     __tablename__ = "raw_posts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    reddit_id = Column(String(20), unique=True, nullable=False, index=True)
+    reddit_id = Column(String(20), nullable=False)
     subreddit = Column(String(100), nullable=False, index=True)
     title = Column(Text, nullable=False)
     body = Column(Text, nullable=True)
-    top_comments = Column(JSON, nullable=True)
+    top_comments = Column(JSONB, nullable=True)
     upvotes = Column(Integer, default=0)
     url = Column(Text, nullable=True)
     author = Column(String(100), nullable=True)
@@ -36,6 +44,12 @@ class RawPost(Base):
     post_topics = relationship("PostTopic", back_populates="post")
     post_labels = relationship("PostLabel", back_populates="post")
 
+    # Migration 001 creates both a unique constraint and a separate index.
+    __table_args__ = (
+        UniqueConstraint("reddit_id", name="raw_posts_reddit_id_key"),
+        Index("ix_raw_posts_reddit_id", "reddit_id"),
+    )
+
 
 class PipelineRun(Base):
     __tablename__ = "pipeline_runs"
@@ -44,8 +58,8 @@ class PipelineRun(Base):
     status = Column(String(20), nullable=False, default="running")  # running, completed, failed
     started_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime(timezone=True), nullable=True)
-    config = Column(JSON, nullable=True)
-    methodology = Column(JSON, nullable=True)
+    config = Column(JSONB, nullable=True)
+    methodology = Column(JSONB, nullable=True)
     error_message = Column(Text, nullable=True)
 
     topics = relationship("Topic", back_populates="pipeline_run")
@@ -59,12 +73,12 @@ class Topic(Base):
     pipeline_run_id = Column(Integer, ForeignKey("pipeline_runs.id"), nullable=False, index=True)
     topic_index = Column(Integer, nullable=False)
     rank = Column(Integer, nullable=False)
-    keywords = Column(JSON, nullable=False)
+    keywords = Column(JSONB, nullable=False)
     gpt_label = Column(String(200), nullable=True)
     gpt_summary = Column(Text, nullable=True)
     post_count = Column(Integer, default=0)
     avg_upvotes = Column(Float, default=0.0)
-    representative_docs = Column(JSON, nullable=True)
+    representative_docs = Column(JSONB, nullable=True)
     personas = Column(JSON, nullable=True)
     failed_solutions = Column(JSON, nullable=True)
     pain_points = Column(JSON, nullable=True)

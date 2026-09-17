@@ -1,13 +1,15 @@
 """Scrape all subreddits, then re-run topic modeling + GPT to update dashboard."""
 import logging
+import sys
 import time
 from datetime import datetime, timezone
 
 from pipeline.config import PipelineConfig
 from pipeline.db import (
+    SchemaNotAtHead,
     create_pipeline_run,
-    ensure_tables,
     get_session,
+    require_schema_at_head,
     store_post_topic,
     store_topic,
     update_pipeline_run,
@@ -33,7 +35,11 @@ ALREADY_SCRAPED = {
 }
 NEW_SUBS = [s for s in config.TARGET_SUBREDDITS if s not in ALREADY_SCRAPED]
 
-ensure_tables(config.DATABASE_URL)
+try:
+    require_schema_at_head(config.DATABASE_URL)
+except SchemaNotAtHead as e:
+    logger.error(str(e))
+    sys.exit(1)
 session = get_session(config.DATABASE_URL)
 
 pipeline_start = time.time()
