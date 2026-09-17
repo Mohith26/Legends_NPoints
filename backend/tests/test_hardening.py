@@ -41,7 +41,7 @@ def _topic(db_session, **fields):
 # ── Pagination bounds ───────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("params", [
-    {"page": 0}, {"page": -1}, {"page_size": 0}, {"page_size": 1000},
+    {"page": 0}, {"page": -1}, {"page": 10**17}, {"page_size": 0}, {"page_size": 1000},
 ])
 def test_topic_posts_rejects_out_of_range_pagination(client, db_session, params):
     topic = _topic(db_session)
@@ -50,7 +50,7 @@ def test_topic_posts_rejects_out_of_range_pagination(client, db_session, params)
 
 
 @pytest.mark.parametrize("params", [
-    {"page": 0}, {"page": -1}, {"page_size": 0}, {"page_size": 1000},
+    {"page": 0}, {"page": -1}, {"page": 10**17}, {"page_size": 0}, {"page_size": 1000},
 ])
 def test_label_posts_rejects_out_of_range_pagination(client, db_session, params):
     label, _ = _label(db_session)
@@ -112,6 +112,45 @@ def test_label_story_complete_record_logs_no_warning(client, db_session, caplog)
         response = client.get(f"/api/labels/{label.id}")
     assert response.status_code == 200
     assert not [r for r in caplog.records if r.name == "backend.schemas"]
+
+
+@pytest.mark.parametrize("failed_solutions, micro_personas", [
+    ([{"solution": "Melatonin", "why_failed": None}], None),
+    (None, [{"child_age": 7}]),
+    (None, ["Burnt-out mom of a 4yo"]),
+])
+def test_label_story_wrong_typed_values_still_render(
+    client, db_session, caplog, failed_solutions, micro_personas,
+):
+    label, story = _label(
+        db_session, failed_solutions=failed_solutions, micro_personas=micro_personas,
+    )
+    with caplog.at_level(logging.WARNING, logger="backend.schemas"):
+        response = client.get(f"/api/labels/{label.id}")
+    assert response.status_code == 200
+    rendered = response.json()["stories"][0]
+    if failed_solutions:
+        assert rendered["failed_solutions"] == [{"solution": "Melatonin", "why_failed": ""}]
+    if micro_personas:
+        assert rendered["micro_personas"][0]["child_age"] == ""
+    assert any(f"label {label.id} story {story.id}" in r.getMessage() for r in caplog.records)
+
+
+def test_label_wrong_typed_marketing_insights_still_renders(client, db_session, caplog):
+    run = _completed_run(db_session)
+    label = ParentLabel(
+        pipeline_run_id=run.id, name="Sleep", slug="sleep", post_count=1,
+        marketing_insights={"ad_hooks": None, "target_audience_description": "Exhausted parents"},
+    )
+    db_session.add(label)
+    db_session.commit()
+    with caplog.at_level(logging.WARNING, logger="backend.schemas"):
+        response = client.get(f"/api/labels/{label.id}")
+    assert response.status_code == 200
+    insights = response.json()["marketing_insights"]
+    assert insights["ad_hooks"] == []
+    assert insights["target_audience_description"] == "Exhausted parents"
+    assert any(f"label {label.id}" in r.getMessage() and "ad_hooks" in r.getMessage() for r in caplog.records)
 
 
 def test_topic_missing_persona_and_solution_keys_still_render(client, db_session):

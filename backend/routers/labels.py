@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import LabelStory, ParentLabel, PipelineRun, PostLabel, RawPost
 from backend.schemas import (
+    MAX_PAGE,
     FailedSolutionSchema,
     LabelDetailResponse,
     LabelListResponse,
@@ -18,14 +19,9 @@ from backend.schemas import (
     SourcePostSchema,
     StoryDetailResponse,
     StorySummary,
-    build_tolerant,
 )
 
 router = APIRouter(tags=["labels"])
-
-# Keys a stored micro-persona is expected to carry, by format (see MicroPersonaSchema)
-_MICRO_PERSONA_KEYS_NEW = ("label", "child_profile", "trigger_scenario", "parent_circumstance", "ad_hook")
-_MICRO_PERSONA_KEYS_OLD = ("description", "child_age", "specific_trigger")
 
 
 def _get_latest_run(db: Session) -> PipelineRun | None:
@@ -174,15 +170,11 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
 
     story_details = []
     for s in stories:
+        record = f"label {label.id} story {s.id}"
         failed_solutions = None
         if s.failed_solutions:
             failed_solutions = [
-                build_tolerant(
-                    FailedSolutionSchema, fs,
-                    expected=("solution", "why_failed"),
-                    context=f"label {label.id} story {s.id}",
-                )
-                for fs in s.failed_solutions
+                FailedSolutionSchema.model_validate(fs, context=record) for fs in s.failed_solutions
             ]
 
         source_posts = []
@@ -240,11 +232,14 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         if s.micro_personas:
             micro_personas = []
             for mp in s.micro_personas:
+                persona = MicroPersonaSchema.model_validate(mp, context=record)
                 # Combine all persona text fields for matching
                 persona_text = " ".join(
-                    mp.get(f, "") for f in
-                    ("child_profile", "trigger_scenario", "parent_circumstance", "description", "specific_trigger")
-                    if mp.get(f)
+                    text for text in (
+                        persona.child_profile, persona.trigger_scenario, persona.parent_circumstance,
+                        persona.description, persona.specific_trigger,
+                    )
+                    if text
                 ).lower()
                 best_post = None
                 if source_posts and persona_text:
@@ -258,12 +253,8 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                             best_post = sp
                     if best_score == 0:
                         best_post = max(source_posts, key=lambda p: p.upvotes)
-                micro_personas.append(build_tolerant(
-                    MicroPersonaSchema, mp,
-                    expected=_MICRO_PERSONA_KEYS_OLD if "description" in mp else _MICRO_PERSONA_KEYS_NEW,
-                    context=f"label {label.id} story {s.id}",
-                    source_post=best_post,
-                ))
+                persona.source_post = best_post
+                micro_personas.append(persona)
 
         story_details.append(StoryDetailResponse(
             id=s.id,
@@ -281,7 +272,9 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
 
     marketing = None
     if label.marketing_insights:
-        marketing = MarketingInsightsSchema(**label.marketing_insights)
+        marketing = MarketingInsightsSchema.model_validate(
+            label.marketing_insights, context=f"label {label.id}"
+        )
 
     return LabelDetailResponse(
         id=label.id,
@@ -320,7 +313,7 @@ def _pain_sort_expr():
 @router.get("/api/labels/{label_id}/posts", response_model=PostListResponse)
 def get_label_posts(
     label_id: int,
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=MAX_PAGE),
     page_size: int = Query(20, ge=1, le=100),
     sort: str = Query("upvotes", pattern="^(upvotes|pain)$"),
     db: Session = Depends(get_db),

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import PipelineRun, PostTopic, RawPost, Topic
 from backend.schemas import (
+    MAX_PAGE,
     FailedSolutionSchema,
     KeywordSchema,
     PersonaSchema,
@@ -15,7 +16,6 @@ from backend.schemas import (
     TopicDetailResponse,
     TopicListResponse,
     TopicSummary,
-    build_tolerant,
 )
 
 router = APIRouter(tags=["topics"])
@@ -86,19 +86,11 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
         keywords=keywords,
         representative_docs=rep_docs,
         personas=[
-            build_tolerant(
-                PersonaSchema, p,
-                expected=("type", "child_age_range", "key_struggle"),
-                context=f"topic {topic.id}",
-            )
+            PersonaSchema.model_validate(p, context=f"topic {topic.id}")
             for p in (topic.personas or [])
         ],
         failed_solutions=[
-            build_tolerant(
-                FailedSolutionSchema, f,
-                expected=("solution", "why_failed"),
-                context=f"topic {topic.id}",
-            )
+            FailedSolutionSchema.model_validate(f, context=f"topic {topic.id}")
             for f in (topic.failed_solutions or [])
         ],
         pain_points=topic.pain_points,
@@ -127,7 +119,7 @@ def _pain_sort_expr():
 @router.get("/api/topics/{topic_id}/posts", response_model=PostListResponse)
 def get_topic_posts(
     topic_id: int,
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=MAX_PAGE),
     page_size: int = Query(20, ge=1, le=100),
     sort: str = Query("upvotes", pattern="^(upvotes|pain)$"),
     db: Session = Depends(get_db),

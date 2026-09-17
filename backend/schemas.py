@@ -1,35 +1,52 @@
 import logging
+from collections.abc import Iterable
 from datetime import datetime
-from typing import TypeVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, model_validator
 
 logger = logging.getLogger(__name__)
 
-_SchemaT = TypeVar("_SchemaT", bound=BaseModel)
+# Upper bound for the `page` query parameter; keeps (page - 1) * page_size far below any integer limit.
+MAX_PAGE = 1_000_000
 
 
-def build_tolerant(
-    schema_cls: type[_SchemaT],
-    data: dict,
-    *,
-    expected: tuple[str, ...],
-    context: str,
-    **extra,
-) -> _SchemaT:
-    """Build a read schema from stored GPT-produced JSON, tolerating omitted keys.
+class StoredRecord(BaseModel):
+    """A GPT-produced JSON object re-validated from the database at read time.
 
-    Every key in ``expected`` that is absent from ``data`` falls back to the
-    schema's default; a warning naming ``context`` (e.g. the label/story id)
-    is logged so the malformed record can be found without failing the request.
+    Validate with ``model_validate(data, context=<owning record>)``. Data that is
+    not an object, omits keys, or holds wrong-typed values degrades to the field
+    defaults with one warning naming the owner, so a single malformed stored
+    record cannot fail the whole response.
     """
-    missing = [k for k in expected if k not in data]
-    if missing:
-        logger.warning(
-            "%s: stored %s missing %s; using defaults",
-            context, schema_cls.__name__, ", ".join(missing),
-        )
-    return schema_cls(**data, **extra)
+
+    @classmethod
+    def _stored_keys(cls) -> Iterable[str]:
+        return cls.model_fields
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _tolerate_malformed(cls, data, handler, info: ValidationInfo):
+        if isinstance(data, cls):
+            return handler(data)
+        where = info.context or "unknown record"
+        if not isinstance(data, dict):
+            logger.warning("%s: stored %s is %r, not an object; using defaults", where, cls.__name__, data)
+            return handler({})
+        try:
+            record = handler(data)
+            invalid = []
+        except ValidationError as exc:
+            invalid = sorted({str(err["loc"][0]) for err in exc.errors() if err["loc"]})
+            record = handler({k: v for k, v in data.items() if k not in invalid})
+        problems = []
+        missing = [k for k in cls._stored_keys() if k not in data]
+        if missing:
+            problems.append("missing " + ", ".join(missing))
+        if invalid:
+            problems.append("invalid " + ", ".join(invalid))
+        if problems:
+            logger.warning("%s: stored %s %s; using defaults", where, cls.__name__, "; ".join(problems))
+        return record
 
 
 class KeywordSchema(BaseModel):
@@ -37,15 +54,13 @@ class KeywordSchema(BaseModel):
     weight: float
 
 
-# Persona/solution schemas are re-validated from stored GPT JSON at read time.
-# Defaults keep one partially formed record from failing the whole response.
-class PersonaSchema(BaseModel):
+class PersonaSchema(StoredRecord):
     type: str = ""
     child_age_range: str = ""
     key_struggle: str = ""
 
 
-class FailedSolutionSchema(BaseModel):
+class FailedSolutionSchema(StoredRecord):
     solution: str = ""
     why_failed: str = ""
 
@@ -132,7 +147,7 @@ class HealthResponse(BaseModel):
 
 # ── Label Analysis Schemas ──────────────────────────────────────────────────
 
-class MarketingInsightsSchema(BaseModel):
+class MarketingInsightsSchema(StoredRecord):
     ad_hooks: list[str] = []
     messaging_angles: list[str] = []
     target_audience_description: str = ""
@@ -147,18 +162,24 @@ class SourcePostSchema(BaseModel):
     upvotes: int
 
 
-class MicroPersonaSchema(BaseModel):
-    # New 5-field format
+class StoredMicroPersona(StoredRecord):
     label: str = ""
     child_profile: str = ""
     trigger_scenario: str = ""
     parent_circumstance: str = ""
     ad_hook: str = ""
+
+
+class MicroPersonaSchema(StoredMicroPersona):
     source_post: SourcePostSchema | None = None
     # Backward compat with old format
     description: str = ""
     child_age: str = ""
     specific_trigger: str = ""
+
+    @classmethod
+    def _stored_keys(cls) -> Iterable[str]:
+        return StoredMicroPersona.model_fields
 
 
 class StorySummary(BaseModel):
