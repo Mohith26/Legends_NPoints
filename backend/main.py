@@ -1,4 +1,3 @@
-import os
 from pathlib import Path, PurePosixPath
 
 from fastapi import FastAPI
@@ -57,4 +56,6 @@ app.include_router(labels.router)
 # Serve React build in production
 frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
-    app.mount("/", SPAStaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    app.mount(
+        "/", SPAStaticFiles(directory=str(frontend_dist), html=True), name="frontend"
+    )

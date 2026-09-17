@@ -10,7 +10,7 @@ def test_client_side_routes_serve_index_html(client, path):
     response = client.get(path)
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
-    assert "<div id=\"root\"></div>" in response.text
+    assert '<div id="root"></div>' in response.text
 
 
 def test_root_still_serves_index_html(client):
