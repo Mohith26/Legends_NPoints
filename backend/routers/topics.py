@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import PipelineRun, PostTopic, RawPost, Topic
 from backend.schemas import (
+    MAX_PAGE,
     FailedSolutionSchema,
     KeywordSchema,
     PersonaSchema,
@@ -15,6 +16,7 @@ from backend.schemas import (
     TopicDetailResponse,
     TopicListResponse,
     TopicSummary,
+    stored_list,
 )
 
 router = APIRouter(tags=["topics"])
@@ -45,7 +47,7 @@ def get_topics(db: Session = Depends(get_db)):
     topic_summaries = []
     for t in topics:
         keywords = [KeywordSchema(word=kw["word"], weight=kw["weight"]) for kw in (t.keywords or [])]
-        topic_summaries.append(TopicSummary(
+        topic_summaries.append(TopicSummary.model_validate(dict(
             id=t.id,
             rank=t.rank,
             gpt_label=t.gpt_label,
@@ -55,7 +57,7 @@ def get_topics(db: Session = Depends(get_db)):
             keywords=keywords,
             pain_points=t.pain_points,
             build_legends_angle=t.build_legends_angle,
-        ))
+        ), context=f"topic {t.id}"))
 
     return TopicListResponse(
         topics=topic_summaries,
@@ -74,8 +76,9 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
     rep_docs = [
         RepresentativeDoc(**doc) for doc in (topic.representative_docs or [])
     ]
+    record = f"topic {topic.id}"
 
-    return TopicDetailResponse(
+    return TopicDetailResponse.model_validate(dict(
         id=topic.id,
         rank=topic.rank,
         gpt_label=topic.gpt_label,
@@ -84,11 +87,17 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
         avg_upvotes=topic.avg_upvotes,
         keywords=keywords,
         representative_docs=rep_docs,
-        personas=[PersonaSchema(**p) for p in (topic.personas or [])],
-        failed_solutions=[FailedSolutionSchema(**f) for f in (topic.failed_solutions or [])],
+        personas=[
+            PersonaSchema.model_validate(p, context=record)
+            for p in stored_list(topic.personas, where=record, name="personas")
+        ],
+        failed_solutions=[
+            FailedSolutionSchema.model_validate(f, context=record)
+            for f in stored_list(topic.failed_solutions, where=record, name="failed_solutions")
+        ],
         pain_points=topic.pain_points,
         build_legends_angle=topic.build_legends_angle,
-    )
+    ), context=record)
 
 
 # Subset of pain keywords for SQL-level filtering
@@ -112,9 +121,9 @@ def _pain_sort_expr():
 @router.get("/api/topics/{topic_id}/posts", response_model=PostListResponse)
 def get_topic_posts(
     topic_id: int,
-    page: int = 1,
-    page_size: int = 20,
-    sort: str = Query("upvotes", regex="^(upvotes|pain)$"),
+    page: int = Query(1, ge=1, le=MAX_PAGE),
+    page_size: int = Query(20, ge=1, le=100),
+    sort: str = Query("upvotes", pattern="^(upvotes|pain)$"),
     db: Session = Depends(get_db),
 ):
     topic = db.query(Topic).filter(Topic.id == topic_id).first()

@@ -1,6 +1,76 @@
+import logging
+from collections.abc import Iterable
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationError, ValidationInfo, model_validator
+
+logger = logging.getLogger(__name__)
+
+# Upper bound for the `page` query parameter; keeps (page - 1) * page_size far below any integer limit.
+MAX_PAGE = 1_000_000
+
+
+class StoredRecord(BaseModel):
+    """A GPT-produced JSON object re-validated from the database at read time.
+
+    Validate with ``model_validate(data, context=<owning record>)``. Data that is
+    not an object, omits keys, or holds wrong-typed values degrades to the field
+    defaults with one warning naming the owner, so a single malformed stored
+    record cannot fail the whole response.
+    """
+
+    @classmethod
+    def _stored_keys(cls) -> Iterable[str]:
+        return cls.model_fields
+
+    @model_validator(mode="wrap")
+    @classmethod
+    def _tolerate_malformed(cls, data, handler, info: ValidationInfo):
+        if isinstance(data, cls):
+            return handler(data)
+        where = info.context or "unknown record"
+        if not isinstance(data, dict):
+            logger.warning("%s: stored %s is %r, not an object; using defaults", where, cls.__name__, data)
+            return handler({})
+        try:
+            record = handler(data)
+            invalid = []
+        except ValidationError as exc:
+            invalid = sorted({str(err["loc"][0]) for err in exc.errors() if err["loc"]})
+            record = handler({k: v for k, v in data.items() if k not in invalid})
+        problems = []
+        missing = [k for k in cls._stored_keys() if k not in data]
+        if missing:
+            problems.append("missing " + ", ".join(missing))
+        if invalid:
+            problems.append("invalid " + ", ".join(invalid))
+        if problems:
+            logger.warning("%s: stored %s %s; using defaults", where, cls.__name__, "; ".join(problems))
+        return record
+
+
+def stored_list(value, *, where: str, name: str) -> list:
+    """Return a stored JSON list column, treating a non-list value as empty."""
+    if value is None or isinstance(value, list):
+        return value or []
+    logger.warning("%s: stored %s is %r, not a list; ignoring", where, name, value)
+    return []
+
+
+def _keep_strings(value, info: ValidationInfo) -> list[str]:
+    where = info.context or "unknown record"
+    items = stored_list(value, where=where, name=info.field_name)
+    kept = [item for item in items if isinstance(item, str)]
+    if len(kept) < len(items):
+        logger.warning(
+            "%s: stored %s has %d non-string items; dropped", where, info.field_name, len(items) - len(kept),
+        )
+    return kept
+
+
+# A stored GPT-produced list of strings; wrong-typed items are dropped instead of failing the response.
+StoredStrings = Annotated[list[str], BeforeValidator(_keep_strings)]
 
 
 class KeywordSchema(BaseModel):
@@ -8,15 +78,15 @@ class KeywordSchema(BaseModel):
     weight: float
 
 
-class PersonaSchema(BaseModel):
-    type: str
-    child_age_range: str
-    key_struggle: str
+class PersonaSchema(StoredRecord):
+    type: str = ""
+    child_age_range: str = ""
+    key_struggle: str = ""
 
 
-class FailedSolutionSchema(BaseModel):
-    solution: str
-    why_failed: str
+class FailedSolutionSchema(StoredRecord):
+    solution: str = ""
+    why_failed: str = ""
 
 
 class TopicSummary(BaseModel):
@@ -29,7 +99,7 @@ class TopicSummary(BaseModel):
     post_count: int
     avg_upvotes: float
     keywords: list[KeywordSchema]
-    pain_points: list[str] | None = None
+    pain_points: StoredStrings | None = None
     build_legends_angle: str | None = None
 
 
@@ -59,7 +129,7 @@ class TopicDetailResponse(BaseModel):
     representative_docs: list[RepresentativeDoc]
     personas: list[PersonaSchema] | None = None
     failed_solutions: list[FailedSolutionSchema] | None = None
-    pain_points: list[str] | None = None
+    pain_points: StoredStrings | None = None
     build_legends_angle: str | None = None
 
 
@@ -96,11 +166,12 @@ class StatsResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+    db: str
 
 
 # ── Label Analysis Schemas ──────────────────────────────────────────────────
 
-class MarketingInsightsSchema(BaseModel):
+class MarketingInsightsSchema(StoredRecord):
     ad_hooks: list[str] = []
     messaging_angles: list[str] = []
     target_audience_description: str = ""
@@ -115,18 +186,24 @@ class SourcePostSchema(BaseModel):
     upvotes: int
 
 
-class MicroPersonaSchema(BaseModel):
-    # New 5-field format
+class StoredMicroPersona(StoredRecord):
     label: str = ""
     child_profile: str = ""
     trigger_scenario: str = ""
     parent_circumstance: str = ""
     ad_hook: str = ""
+
+
+class MicroPersonaSchema(StoredMicroPersona):
     source_post: SourcePostSchema | None = None
     # Backward compat with old format
     description: str = ""
     child_age: str = ""
     specific_trigger: str = ""
+
+    @classmethod
+    def _stored_keys(cls) -> Iterable[str]:
+        return StoredMicroPersona.model_fields
 
 
 class StorySummary(BaseModel):
@@ -154,8 +231,8 @@ class StoryDetailResponse(BaseModel):
     pain_points: list[PainPointSchema] | None = None
     failed_solutions: list[FailedSolutionSchema] | None = None
     build_legends_angle: str | None = None
-    representative_quotes: list[str] | None = None
-    visceral_quotes: list[str] | None = None
+    representative_quotes: StoredStrings | None = None
+    visceral_quotes: StoredStrings | None = None
     micro_personas: list[MicroPersonaSchema] | None = None
     source_posts: list[SourcePostSchema] = []
 
@@ -187,7 +264,7 @@ class LabelDetailResponse(BaseModel):
     description: str | None
     post_count: int
     discovery_method: str
-    example_phrases: list[str] | None = None
+    example_phrases: StoredStrings | None = None
     marketing_insights: MarketingInsightsSchema | None = None
     stories: list[StoryDetailResponse] = []
 
