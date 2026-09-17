@@ -19,6 +19,7 @@ from backend.schemas import (
     SourcePostSchema,
     StoryDetailResponse,
     StorySummary,
+    stored_list,
 )
 
 router = APIRouter(tags=["labels"])
@@ -156,7 +157,7 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         .all()
     )
     if not label_fallback_posts and label.example_phrases:
-        phrases = [p.strip() for p in label.example_phrases if len(p.strip()) > 3][:6]
+        phrases = [p.strip() for p in label.example_phrases if isinstance(p, str) and len(p.strip()) > 3][:6]
         if phrases:
             label_fallback_posts = (
                 db.query(RawPost)
@@ -171,11 +172,10 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
     story_details = []
     for s in stories:
         record = f"label {label.id} story {s.id}"
-        failed_solutions = None
-        if s.failed_solutions:
-            failed_solutions = [
-                FailedSolutionSchema.model_validate(fs, context=record) for fs in s.failed_solutions
-            ]
+        failed_solutions = [
+            FailedSolutionSchema.model_validate(fs, context=record)
+            for fs in stored_list(s.failed_solutions, where=record, name="failed_solutions")
+        ] or None
 
         source_posts = []
         if s.source_post_ids:
@@ -228,35 +228,33 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
                 ))
 
         # Match each micro-persona to the best-fitting source post by keyword overlap
-        micro_personas = None
-        if s.micro_personas:
-            micro_personas = []
-            for mp in s.micro_personas:
-                persona = MicroPersonaSchema.model_validate(mp, context=record)
-                # Combine all persona text fields for matching
-                persona_text = " ".join(
-                    text for text in (
-                        persona.child_profile, persona.trigger_scenario, persona.parent_circumstance,
-                        persona.description, persona.specific_trigger,
-                    )
-                    if text
-                ).lower()
-                best_post = None
-                if source_posts and persona_text:
-                    persona_words = set(persona_text.split())
-                    best_score = 0
-                    for sp in source_posts:
-                        title_words = set(sp.title.lower().split())
-                        score = len(persona_words & title_words)
-                        if score > best_score:
-                            best_score = score
-                            best_post = sp
-                    if best_score == 0:
-                        best_post = max(source_posts, key=lambda p: p.upvotes)
-                persona.source_post = best_post
-                micro_personas.append(persona)
+        micro_personas = []
+        for mp in stored_list(s.micro_personas, where=record, name="micro_personas"):
+            persona = MicroPersonaSchema.model_validate(mp, context=record)
+            # Combine all persona text fields for matching
+            persona_text = " ".join(
+                text for text in (
+                    persona.child_profile, persona.trigger_scenario, persona.parent_circumstance,
+                    persona.description, persona.specific_trigger,
+                )
+                if text
+            ).lower()
+            best_post = None
+            if source_posts and persona_text:
+                persona_words = set(persona_text.split())
+                best_score = 0
+                for sp in source_posts:
+                    title_words = set(sp.title.lower().split())
+                    score = len(persona_words & title_words)
+                    if score > best_score:
+                        best_score = score
+                        best_post = sp
+                if best_score == 0:
+                    best_post = max(source_posts, key=lambda p: p.upvotes)
+            persona.source_post = best_post
+            micro_personas.append(persona)
 
-        story_details.append(StoryDetailResponse(
+        story_details.append(StoryDetailResponse.model_validate(dict(
             id=s.id,
             title=s.title,
             summary=s.summary,
@@ -266,9 +264,9 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
             build_legends_angle=s.build_legends_angle,
             representative_quotes=s.representative_quotes,
             visceral_quotes=getattr(s, "visceral_quotes", None),
-            micro_personas=micro_personas,
+            micro_personas=micro_personas or None,
             source_posts=source_posts,
-        ))
+        ), context=record))
 
     marketing = None
     if label.marketing_insights:
@@ -276,7 +274,7 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
             label.marketing_insights, context=f"label {label.id}"
         )
 
-    return LabelDetailResponse(
+    return LabelDetailResponse.model_validate(dict(
         id=label.id,
         name=label.name,
         slug=label.slug,
@@ -286,7 +284,7 @@ def get_label(label_id: int, db: Session = Depends(get_db)):
         example_phrases=label.example_phrases,
         marketing_insights=marketing,
         stories=story_details,
-    )
+    ), context=f"label {label.id}")
 
 
 _PAIN_KEYWORDS_SQL = [

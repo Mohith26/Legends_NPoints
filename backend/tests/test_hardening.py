@@ -153,6 +153,67 @@ def test_label_wrong_typed_marketing_insights_still_renders(client, db_session, 
     assert any(f"label {label.id}" in r.getMessage() and "ad_hooks" in r.getMessage() for r in caplog.records)
 
 
+def test_label_story_wrong_typed_quote_item_still_renders(client, db_session, caplog):
+    label, story = _label(db_session, representative_quotes=["ok", None])
+    with caplog.at_level(logging.WARNING, logger="backend.schemas"):
+        response = client.get(f"/api/labels/{label.id}")
+    assert response.status_code == 200
+    assert response.json()["stories"][0]["representative_quotes"] == ["ok"]
+    assert any(
+        f"label {label.id} story {story.id}" in r.getMessage() and "representative_quotes" in r.getMessage()
+        for r in caplog.records
+    )
+
+
+def test_label_wrong_typed_example_phrase_still_renders(client, db_session):
+    run = _completed_run(db_session)
+    label = ParentLabel(
+        pipeline_run_id=run.id, name="Sleep", slug="sleep", post_count=1,
+        example_phrases=["won't sleep", None],
+    )
+    db_session.add(label)
+    db_session.commit()
+    response = client.get(f"/api/labels/{label.id}")
+    assert response.status_code == 200
+    assert response.json()["example_phrases"] == ["won't sleep"]
+
+
+def test_topics_list_wrong_typed_pain_point_still_renders(client, db_session, caplog):
+    topic = _topic(db_session, pain_points=["p", 3])
+    with caplog.at_level(logging.WARNING, logger="backend.schemas"):
+        response = client.get("/api/topics")
+    assert response.status_code == 200
+    assert response.json()["topics"][0]["pain_points"] == ["p"]
+    assert any(f"topic {topic.id}" in r.getMessage() and "pain_points" in r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.parametrize("field, stored", [
+    ("failed_solutions", "None tried"),
+    ("micro_personas", {"label": "Burnt-out mom"}),
+])
+def test_label_story_non_list_container_yields_no_records(client, db_session, caplog, field, stored):
+    label, story = _label(db_session, **{field: stored})
+    with caplog.at_level(logging.WARNING, logger="backend.schemas"):
+        response = client.get(f"/api/labels/{label.id}")
+    assert response.status_code == 200
+    assert response.json()["stories"][0][field] is None
+    warnings = [r for r in caplog.records if r.name == "backend.schemas"]
+    assert len(warnings) == 1
+    assert f"label {label.id} story {story.id}" in warnings[0].getMessage()
+    assert field in warnings[0].getMessage()
+
+
+def test_topic_non_list_container_yields_no_records(client, db_session, caplog):
+    topic = _topic(db_session, personas="Exhausted new parent")
+    with caplog.at_level(logging.WARNING, logger="backend.schemas"):
+        response = client.get(f"/api/topics/{topic.id}")
+    assert response.status_code == 200
+    assert response.json()["personas"] == []
+    assert [r.getMessage() for r in caplog.records if r.name == "backend.schemas"] == [
+        f"topic {topic.id}: stored personas is 'Exhausted new parent', not a list; ignoring"
+    ]
+
+
 def test_topic_missing_persona_and_solution_keys_still_render(client, db_session):
     topic = _topic(
         db_session,

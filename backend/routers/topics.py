@@ -16,6 +16,7 @@ from backend.schemas import (
     TopicDetailResponse,
     TopicListResponse,
     TopicSummary,
+    stored_list,
 )
 
 router = APIRouter(tags=["topics"])
@@ -46,7 +47,7 @@ def get_topics(db: Session = Depends(get_db)):
     topic_summaries = []
     for t in topics:
         keywords = [KeywordSchema(word=kw["word"], weight=kw["weight"]) for kw in (t.keywords or [])]
-        topic_summaries.append(TopicSummary(
+        topic_summaries.append(TopicSummary.model_validate(dict(
             id=t.id,
             rank=t.rank,
             gpt_label=t.gpt_label,
@@ -56,7 +57,7 @@ def get_topics(db: Session = Depends(get_db)):
             keywords=keywords,
             pain_points=t.pain_points,
             build_legends_angle=t.build_legends_angle,
-        ))
+        ), context=f"topic {t.id}"))
 
     return TopicListResponse(
         topics=topic_summaries,
@@ -75,8 +76,9 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
     rep_docs = [
         RepresentativeDoc(**doc) for doc in (topic.representative_docs or [])
     ]
+    record = f"topic {topic.id}"
 
-    return TopicDetailResponse(
+    return TopicDetailResponse.model_validate(dict(
         id=topic.id,
         rank=topic.rank,
         gpt_label=topic.gpt_label,
@@ -86,16 +88,16 @@ def get_topic(topic_id: int, db: Session = Depends(get_db)):
         keywords=keywords,
         representative_docs=rep_docs,
         personas=[
-            PersonaSchema.model_validate(p, context=f"topic {topic.id}")
-            for p in (topic.personas or [])
+            PersonaSchema.model_validate(p, context=record)
+            for p in stored_list(topic.personas, where=record, name="personas")
         ],
         failed_solutions=[
-            FailedSolutionSchema.model_validate(f, context=f"topic {topic.id}")
-            for f in (topic.failed_solutions or [])
+            FailedSolutionSchema.model_validate(f, context=record)
+            for f in stored_list(topic.failed_solutions, where=record, name="failed_solutions")
         ],
         pain_points=topic.pain_points,
         build_legends_angle=topic.build_legends_angle,
-    )
+    ), context=record)
 
 
 # Subset of pain keywords for SQL-level filtering

@@ -1,8 +1,9 @@
 import logging
 from collections.abc import Iterable
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationError, ValidationInfo, model_validator
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,29 @@ class StoredRecord(BaseModel):
         return record
 
 
+def stored_list(value, *, where: str, name: str) -> list:
+    """Return a stored JSON list column, treating a non-list value as empty."""
+    if value is None or isinstance(value, list):
+        return value or []
+    logger.warning("%s: stored %s is %r, not a list; ignoring", where, name, value)
+    return []
+
+
+def _keep_strings(value, info: ValidationInfo) -> list[str]:
+    where = info.context or "unknown record"
+    items = stored_list(value, where=where, name=info.field_name)
+    kept = [item for item in items if isinstance(item, str)]
+    if len(kept) < len(items):
+        logger.warning(
+            "%s: stored %s has %d non-string items; dropped", where, info.field_name, len(items) - len(kept),
+        )
+    return kept
+
+
+# A stored GPT-produced list of strings; wrong-typed items are dropped instead of failing the response.
+StoredStrings = Annotated[list[str], BeforeValidator(_keep_strings)]
+
+
 class KeywordSchema(BaseModel):
     word: str
     weight: float
@@ -75,7 +99,7 @@ class TopicSummary(BaseModel):
     post_count: int
     avg_upvotes: float
     keywords: list[KeywordSchema]
-    pain_points: list[str] | None = None
+    pain_points: StoredStrings | None = None
     build_legends_angle: str | None = None
 
 
@@ -105,7 +129,7 @@ class TopicDetailResponse(BaseModel):
     representative_docs: list[RepresentativeDoc]
     personas: list[PersonaSchema] | None = None
     failed_solutions: list[FailedSolutionSchema] | None = None
-    pain_points: list[str] | None = None
+    pain_points: StoredStrings | None = None
     build_legends_angle: str | None = None
 
 
@@ -207,8 +231,8 @@ class StoryDetailResponse(BaseModel):
     pain_points: list[PainPointSchema] | None = None
     failed_solutions: list[FailedSolutionSchema] | None = None
     build_legends_angle: str | None = None
-    representative_quotes: list[str] | None = None
-    visceral_quotes: list[str] | None = None
+    representative_quotes: StoredStrings | None = None
+    visceral_quotes: StoredStrings | None = None
     micro_personas: list[MicroPersonaSchema] | None = None
     source_posts: list[SourcePostSchema] = []
 
@@ -240,7 +264,7 @@ class LabelDetailResponse(BaseModel):
     description: str | None
     post_count: int
     discovery_method: str
-    example_phrases: list[str] | None = None
+    example_phrases: StoredStrings | None = None
     marketing_insights: MarketingInsightsSchema | None = None
     stories: list[StoryDetailResponse] = []
 
